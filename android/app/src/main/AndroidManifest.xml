@@ -32,6 +32,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="TUYA_SMART_APPKEY"
+            android:value="xxft3fqw93d375ucppkn" />
+        <meta-data
+            android:name="TUYA_SMART_SECRET"
+            android:value="k8u9edtefgrwcmkqaesra9gmgmpuh8uy" />
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
