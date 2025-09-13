@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.tuya_app"
+    namespace = "com.zerotechiot.eg"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.tuya_app"
+        applicationId = "com.zerotechiot.eg"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26
@@ -68,10 +68,11 @@ flutter {
     source = "../.."
 }
 dependencies {
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
+     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
     implementation("com.alibaba:fastjson:2.0.58")
 
     implementation("com.thingclips.smart:thingsmart:6.7.3") {
         exclude(module = "thingsmart-modularCampAnno")
     }
+    implementation("androidx.appcompat:appcompat:1.7.1")
 }

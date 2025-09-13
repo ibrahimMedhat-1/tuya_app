@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 // Method to initialize Tuya SDK
 
 void main() {
-
   runApp(const MyApp());
 }
 
@@ -68,9 +67,11 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
     });
-  }Future<void> _initTuyaSdk() async {
+  }
+
+  Future<void> _initTuyaSdk() async {
     try {
-      const MethodChannel _channel = MethodChannel('com.example.tuya/sdk');
+      const MethodChannel _channel = MethodChannel('com.zerotechiot.eg/tuya_sdk');
 
       // Replace 'initTuyaSdk' with your actual method name for SDK initialization
       final String? result = await _channel.invokeMethod('initSDK');
@@ -125,10 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
           ],
         ),
       ),
