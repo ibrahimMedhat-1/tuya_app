@@ -30,27 +30,26 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-        }
-    }
     signingConfigs {
         create("release") {
-            storeFile = file("C:\\Users\\pc\\StudioProjects\\tuya\\android\\app\\sha 256.jks")
+            storeFile = file("C:\\Users\\pc\\StudioProjects\\tuya_app\\android\\app\\sha.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"
         }
     }
+
     buildTypes {
         release {
-
             signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
+
     repositories {
         google()
         mavenCentral()
@@ -67,10 +66,11 @@ android {
 flutter {
     source = "../.."
 }
-dependencies {
-     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
-    implementation("com.alibaba:fastjson:2.0.58")
 
+dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
+    implementation("com.alibaba:fastjson:2.0.58")
+    implementation("com.squareup.okhttp3:okhttp-urlconnection:5.1.0")
     implementation("com.thingclips.smart:thingsmart:6.7.3") {
         exclude(module = "thingsmart-modularCampAnno")
     }
