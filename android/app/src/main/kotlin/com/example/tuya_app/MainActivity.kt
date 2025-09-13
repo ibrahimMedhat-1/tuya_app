@@ -1,6 +1,7 @@
 package com.zerotechiot.eg
 
 import android.app.Application
+import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -16,29 +17,31 @@ class MainActivity : FlutterActivity() {
             channel
         ).setMethodCallHandler { call, result ->
             when (call.method) {
-                "initSDK" -> TuyaMethods().initTuyaSdk(   result)
+                "initSDK" -> {
+                    // SDK is already initialized in Application.onCreate()
+                    result.success("Tuya SDK initialized successfully")
+                }
+
+                "isSDKInitialized" -> {
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Clean up SDK resources when app is destroyed
+        ThingHomeSdk.onDestroy()
+    }
 }
-
-class TuyaMethods : Application() {
-    fun initTuyaSdk(  result: MethodChannel.Result) {
-        val appKey = "xxft3fqw93d375ucppkn"
-        val appSecret = "k8u9edtefgrwcmkqaesra9gmgmpuh8uy"
-
-        try {
-            // Get the Application context from the activity
-
-            ThingHomeSdk.init(this, appKey, appSecret)
-            result.success("Tuya SDK initialized successfully.")
-        } catch (e: Exception) {
-            result.error(
-                "SDK_INIT_ERROR",
-                "Failed to initialize Tuya SDK",
-                e.message
-            )
-        }
+class TuyaApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        // Initialize Tuya SDK - this must be done in Application.onCreate()
+        ThingHomeSdk.init(this)
+        // Enable debug mode for development (disable in production)
+        ThingHomeSdk.setDebugMode(true)
     }
 }
