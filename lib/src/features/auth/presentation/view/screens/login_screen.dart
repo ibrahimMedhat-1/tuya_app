@@ -41,11 +41,7 @@ class LoginScreen extends StatelessWidget {
                         constraints: BoxConstraints(
                           maxWidth: context.responsiveMaxWidth,
                         ),
-                        child: LoginFormCard(
-                          onLoginPressed: () {
-                            print('onLoginPressed');
-                          },
-                        ),
+                        child: LoginFormCard(onLoginPressed: () {}),
                       ),
                     ),
 
@@ -53,14 +49,14 @@ class LoginScreen extends StatelessWidget {
                     (context.isMobile ? 30.0 : 40.0).height,
 
                     // Social Login Options
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: context.responsiveMaxWidth,
-                        ),
-                        child: const SocialLoginSection(),
-                      ),
-                    ),
+                    // Center(
+                    //   child: ConstrainedBox(
+                    //     constraints: BoxConstraints(
+                    //       maxWidth: context.responsiveMaxWidth,
+                    //     ),
+                    //     child: const SocialLoginSection(),
+                    //   ),
+                    // ),
 
                     // Responsive spacing
                     (context.isMobile ? 20.0 : 30.0).height,
