@@ -1,4 +1,5 @@
 import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:tuya_app/src/features/auth/presentation/manager/cubit/auth_cubit.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -20,10 +21,7 @@ class LoginScreen extends StatelessWidget {
             padding: context.responsiveHorizontalPadding,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight:
-                    context.screenHeight -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
+                minHeight: context.screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
               ),
               child: IntrinsicHeight(
                 child: Column(
@@ -38,10 +36,12 @@ class LoginScreen extends StatelessWidget {
                     // Login Form Card
                     Center(
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: context.responsiveMaxWidth,
+                        constraints: BoxConstraints(maxWidth: context.responsiveMaxWidth),
+                        child: LoginFormCard(
+                          onLoginPressed: (email, password) async {
+                            await sl<AuthCubit>().login(context,email, password);
+                          },
                         ),
-                        child: LoginFormCard(onLoginPressed: () {}),
                       ),
                     ),
 

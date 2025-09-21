@@ -1,8 +1,8 @@
 import 'package:tuya_app/src/core/utils/app_imports.dart';
 
-void main() {
-  initializeDependencies();
-
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await getItInit();
   runApp(const MyApp());
 }
 
@@ -14,10 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tuya Smart Home',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue), useMaterial3: true),
       home: const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );

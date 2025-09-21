@@ -1,8 +1,7 @@
 package com.zerotechiot.eg
 
-import android.app.Application
+import android.os.Bundle
 import com.thingclips.smart.android.user.api.ILoginCallback
-import com.thingclips.smart.android.user.api.IResetPasswordCallback
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.android.user.bean.User
 import io.flutter.embedding.android.FlutterActivity
@@ -19,33 +18,14 @@ class MainActivity : FlutterActivity() {
             channel
         ).setMethodCallHandler { call, result ->
             when (call.method) {
-                "initSDK" -> {
-                    // SDK is already initialized in Application.onCreate()
-                    result.success("Tuya SDK initialized successfully")
-                }
-
-                "isSDKInitialized" -> {
-                    result.success(true)
-                }
-
                 "login" -> {
                     val email = call.argument<String>("email")
                     val password = call.argument<String>("password")
-                    
+
                     if (email != null && password != null) {
                         loginUser(email, password, result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "Email and password are required", null)
-                    }
-                }
-
-                "resetPassword" -> {
-                    val email = call.argument<String>("email")
-                    
-                    if (email != null) {
-                        resetPassword(email, result)
-                    } else {
-                        result.error("INVALID_ARGUMENTS", "Email is required", null)
                     }
                 }
 
@@ -79,35 +59,10 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    private fun resetPassword(email: String, result: MethodChannel.Result) {
-        ThingHomeSdk.getUserInstance().sendVerifyCodeWithUserName(
-            email,
-            "US", // Country code
-            "1", // Type: 1 for reset password
-            object : IResetPasswordCallback {
-                override fun onSuccess() {
-                    result.success("Password reset email sent successfully")
-                }
-
-                override fun onError(code: String?, error: String?) {
-                    result.error("RESET_PASSWORD_FAILED", error ?: "Failed to send reset password email", null)
-                }
-            }
-        )
-    }
 
     override fun onDestroy() {
         super.onDestroy()
         // Clean up SDK resources when app is destroyed
         ThingHomeSdk.onDestroy()
-    }
-}
-class TuyaApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        // Initialize Tuya SDK - this must be done in Application.onCreate()
-        ThingHomeSdk.init(this)
-        // Enable debug mode for development (disable in production)
-        ThingHomeSdk.setDebugMode(true)
     }
 }

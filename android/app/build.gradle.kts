@@ -29,11 +29,13 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a","x86","x86_64")
         }
     }
     packagingOptions {
-        pickFirst("lib/*/libc++_shared.so")
+        jniLibs {
+            pickFirsts += setOf("lib/*/libc++_shared.so")
+        }
     }
 
     signingConfigs {
@@ -59,6 +61,7 @@ android {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://github.com/Kotlin/kotlinx.serialization/releases") }
         maven { url = uri("https://maven-other.tuya.com/repository/maven-releases/") }
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }

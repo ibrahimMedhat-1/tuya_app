@@ -1,7 +1,7 @@
 import 'package:tuya_app/src/core/utils/app_imports.dart';
 
 class LoginFormCard extends StatefulWidget {
-  final VoidCallback? onLoginPressed;
+  final Future<void> Function(String email,String password)? onLoginPressed; // Changed to allow async
   final VoidCallback? onForgotPasswordPressed;
 
   const LoginFormCard({
@@ -18,6 +18,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isButtonEnabled = false;
+  bool _isLoading = false; // Added isLoading state
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
   }
 
   void _checkButtonState() {
+    if (_isLoading) return; // Don't change button state if loading
     final bool isEnabled =
         _emailController.text.trim().isNotEmpty &&
         _passwordController.text.trim().isNotEmpty;
@@ -42,6 +44,25 @@ class _LoginFormCardState extends State<LoginFormCard> {
       setState(() {
         _isButtonEnabled = isEnabled;
       });
+    }
+  }
+
+  Future<void> _handleLogin() async {
+    if (widget.onLoginPressed == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await widget.onLoginPressed!(_emailController.text, _passwordController.text);
+    } finally {
+      if (mounted) { // Check if the widget is still in the tree
+        setState(() {
+          _isLoading = false;
+        });
+        _checkButtonState(); // Re-evaluate button enabled state
+      }
     }
   }
 
@@ -61,6 +82,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
             prefixIcon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
             controller: _emailController,
+            enabled: !_isLoading, // Disable field when loading
           ),
 
           (context.isMobile ? 20 : 24).height,
@@ -72,6 +94,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
             prefixIcon: Icons.lock_outline,
             isPassword: true,
             controller: _passwordController,
+            enabled: !_isLoading, // Disable field when loading
           ),
 
           (context.isMobile ? 12 : 16).height,
@@ -80,7 +103,7 @@ class _LoginFormCardState extends State<LoginFormCard> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: widget.onForgotPasswordPressed,
+              onPressed: _isLoading ? null : widget.onForgotPasswordPressed, // Disable when loading
               child: Text(
                 'Forgot Password?',
                 style: TextStyle(
@@ -96,10 +119,11 @@ class _LoginFormCardState extends State<LoginFormCard> {
 
           // Login Button
           AppButton(
-            text: 'Sign In',
-            onPressed: _isButtonEnabled ? widget.onLoginPressed : null,
+            isLoading: _isLoading,
+            text:  'Sign In', // Show text only if not loading
+            onPressed: (_isButtonEnabled && !_isLoading) ? _handleLogin : null,
             type: ButtonType.primary,
-            isEnabled: _isButtonEnabled,
+            isEnabled: _isButtonEnabled && !_isLoading, // Button is enabled if form is valid and not loading
             height: context.isMobile ? 48 : 56,
           ),
         ],
