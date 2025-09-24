@@ -21,7 +21,13 @@ class LoginScreen extends StatelessWidget {
             padding: context.responsiveHorizontalPadding,
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: context.screenHeight - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom,
+                minHeight: context.screenHeight - MediaQuery
+                    .of(context)
+                    .padding
+                    .top - MediaQuery
+                    .of(context)
+                    .padding
+                    .bottom,
               ),
               child: IntrinsicHeight(
                 child: Column(
@@ -39,7 +45,12 @@ class LoginScreen extends StatelessWidget {
                         constraints: BoxConstraints(maxWidth: context.responsiveMaxWidth),
                         child: LoginFormCard(
                           onLoginPressed: (email, password) async {
-                            await sl<AuthCubit>().login(context,email, password);
+                            await sl<AuthCubit>().login(context, email, password).then((onValue) {
+                              showDialog(context: context, builder: (context) => Dialog(child: Text('logged in '),),);
+                            }).catchError((onError) {
+                              showDialog(context: context, builder: (context) => Dialog(child: Text('error :$onError '),),);
+
+                            });
                           },
                         ),
                       ),
