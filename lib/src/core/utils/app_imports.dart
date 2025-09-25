@@ -4,7 +4,6 @@ export 'package:flutter/services.dart';
 
 // State Management
 export 'package:flutter_bloc/flutter_bloc.dart';
-export 'package:equatable/equatable.dart';
 
 // Core Helpers
 export 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
@@ -12,6 +11,7 @@ export 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 
 // Core Utils
 export 'package:tuya_app/src/core/utils/di.dart';
+export 'package:json_annotation/json_annotation.dart';
 
 // Core Widgets
 export 'package:tuya_app/src/core/widgets/app_button.dart';

@@ -47,7 +47,7 @@ class MainActivity : FlutterActivity() {
                         "id" to (user?.uid ?: ""),
                         "email" to (user?.email ?: email),
                         "name" to (user?.username ?: email.split("@")[0]),
-                        "avatarUrl" to null
+
                     )
                     result.success(userData)
                 }
