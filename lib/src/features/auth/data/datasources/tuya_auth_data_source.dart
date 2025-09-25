@@ -12,13 +12,9 @@ class TuyaAuthDataSource {
         'email': email,
         'password': password,
       });
-print('user data $result');
-      if (result is Map<String, dynamic>) {
         _currentUser = User.fromJson(result);
         return _currentUser!;
-      } else {
-        throw Exception('Invalid response format from Tuya SDK');
-      }
+
     } on PlatformException catch (e) {
       throw _handlePlatformException(e);
     } catch (e) {

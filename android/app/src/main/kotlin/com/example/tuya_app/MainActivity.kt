@@ -46,9 +46,7 @@ class MainActivity : FlutterActivity() {
                     val userData = mapOf(
                         "id" to (user?.uid ?: ""),
                         "email" to (user?.email ?: email),
-                        "name" to (user?.username ?: email.split("@")[0]),
-
-                    )
+                        "name" to (user?.username ?: email.split("@")[0]),)
                     result.success(userData)
                 }
 
