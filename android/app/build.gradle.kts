@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.util.profile
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -40,7 +42,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("C:\\Users\\i.medhat\\StudioProjects\\tuya_app\\android\\app\\sha.jks")
+            storeFile = file("/Users/apple/StudioProjects/tuya_app/android/app/sha256.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"
@@ -48,6 +50,11 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+
+
         release {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
