@@ -2,7 +2,7 @@ package com.zerotechiot.eg
 
 import android.app.Application
 import android.util.Log
- import com.thingclips.smart.home.sdk.ThingHomeSdk
+import com.thingclips.smart.home.sdk.ThingHomeSdk
 
 /**
  * Custom Application class for initializing Tuya SDK
