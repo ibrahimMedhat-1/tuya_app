@@ -38,3 +38,5 @@ export 'package:tuya_app/src/features/auth/data/repositories/auth_repository.dar
 export 'package:tuya_app/src/features/auth/data/datasources/tuya_auth_data_source.dart';
 export 'package:tuya_app/src/features/auth/data/repositories/tuya_impl.dart';
 export 'package:tuya_app/src/features/auth/domain/usecases/auth_usecase.dart';
+export 'package:tuya_app/src/core/utils/routing.dart';
+export 'package:tuya_app/src/core/extensions/context_extensions.dart';

@@ -46,7 +46,7 @@ class LoginScreen extends StatelessWidget {
                         child: LoginFormCard(
                           onLoginPressed: (email, password) async {
                             await sl<AuthCubit>().login(context, email, password).then((onValue) {
-                              showDialog(context: context, builder: (context) => Dialog(child: Text('logged in '),),);
+                              context.pushReplacementNamed(Routes.homeRoute);
                             }).catchError((onError) {
                               showDialog(context: context, builder: (context) => Dialog(child: Text('error :$onError '),),);
 

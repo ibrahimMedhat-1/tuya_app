@@ -42,7 +42,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("/Users/apple/StudioProjects/tuya_app/android/app/sha256.jks")
+            storeFile = file("/Users/ahmedghareb/StudioProjects/tuya_app/android/app/sha.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"

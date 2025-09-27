@@ -23,16 +23,5 @@ class AuthUseCase {
     return await _authRepository.login(email, password);
   }
 
-  Future<void> resetPassword(String email) async {
-    // Add any business logic validation here
-    if (email.isEmpty) {
-      throw Exception('Email cannot be empty');
-    }
 
-    if (!email.contains('@')) {
-      throw Exception('Please enter a valid email address');
-    }
-
-    return await _authRepository.resetPassword(email);
-  }
 }
