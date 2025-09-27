@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.author           = { 'ios' => 'developer@tuya.com' }
   s.source           = { :git => '', :tag => s.version.to_s }
   # s.prepare_command = <<-CMD
-
+  #
   #     if [ -f "ios_core_sdk.tar.gz" ]; then
   #       if [ ! -d "Build/ThingSmartCryption.xcframework" ]; then
   #         unzip ios_core_sdk.tar.gz
@@ -16,13 +16,16 @@ Pod::Spec.new do |s|
   #     else
   #       echo "File ios_core_sdk.tar.gz not found."
   #     fi
-
+  #
   # CMD
   s.ios.deployment_target = '9.0'
   s.watchos.deployment_target = '2.0'
 
-  s.ios.source_files = 'Build/ThingSmartCryption.xcframework/ios*simulator/ThingSmartCryption.framework/Headers/*'
-  s.resources = ['Build/ThingSmartCryption.xcframework/ios*simulator/**/*.bundle', 'Build/ThingSmartCryption.xcframework/ios*simulator/**/t_cdc.tcfg']
+  s.ios.source_files = 'Build/ThingSmartCryption.xcframework/ios*/ThingSmartCryption.framework/Headers/*'
+  s.resources = [
+    'Build/ThingSmartCryption.xcframework/ios*/ThingSmartCryption.framework/**/*.bundle',
+    'Build/ThingSmartCryption.xcframework/ios*/ThingSmartCryption.framework/CustomResources/Assets/t_cdc.tcfg'
+  ]
 
   s.watchos.source_files = 'Build/ThingSmartCryption.xcframework/watchos*simulator/ThingSmartCryption.framework/Headers/*'
 
