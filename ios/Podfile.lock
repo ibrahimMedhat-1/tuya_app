@@ -11321,7 +11321,7 @@ SPEC CHECKSUMS:
   ThingSmartCameraSettingConfigModule: 527fb7064296d4e2da41f97044406a4d33d06953
   ThingSmartClientConfigModule: 78cefb9f25489ec008e54d6a72b3c22f2c2a2152
   ThingSmartCloudServiceBizBundle: 7bf8ab5b5c7dbfaaa42abdf8b451e1dd6d65996e
-  ThingSmartCryption: 33906a7bf4d19f26bf90dccde474e2bcba46c21f
+  ThingSmartCryption: cdfb2798f5ce42621dbfae4185c4a831982a65a7
   ThingSmartDeviceCoreKit: 2afd8087cb5b2b00aa20c432ae681d3386a7afe7
   ThingSmartDeviceDetailBizBundle: 81e0c39b5b3b681979f6a80e652a00708efc1b5d
   ThingSmartDeviceDetailLink: afdc623bbda79da0807ca9b4afffaed8511dbcab

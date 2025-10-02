@@ -23,5 +23,11 @@ class AuthUseCase {
     return await _authRepository.login(email, password);
   }
 
+  Future<User?> isLoggedIn() async {
+    return await _authRepository.isLoggedIn();
+  }
 
+  Future<void> logout() async {
+    return await _authRepository.logout();
+  }
 }

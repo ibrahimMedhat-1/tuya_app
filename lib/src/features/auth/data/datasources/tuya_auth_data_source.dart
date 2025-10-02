@@ -3,6 +3,7 @@ import 'package:tuya_app/src/core/utils/constants.dart';
 
 class TuyaAuthDataSource {
   User? _currentUser;
+  
   Future<User> login(String email, String password) async {
     try {
       final result = await AppConstants.channel.invokeMethod('login', {
@@ -15,6 +16,32 @@ class TuyaAuthDataSource {
       throw _handlePlatformException(e);
     } catch (e) {
       throw Exception('Login failed: ${e.toString()}');
+    }
+  }
+
+  Future<User?> isLoggedIn() async {
+    try {
+      final result = await AppConstants.channel.invokeMethod('isLoggedIn');
+      if (result != null) {
+        _currentUser = User.fromJson(result);
+        return _currentUser;
+      }
+      return null;
+    } on PlatformException catch (e) {
+      throw _handlePlatformException(e);
+    } catch (e) {
+      throw Exception('Check login status failed: ${e.toString()}');
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await AppConstants.channel.invokeMethod('logout');
+      _currentUser = null;
+    } on PlatformException catch (e) {
+      throw _handlePlatformException(e);
+    } catch (e) {
+      throw Exception('Logout failed: ${e.toString()}');
     }
   }
 
