@@ -1,6 +1,7 @@
+import 'package:tuya_app/src/features/home/domain/entities/device.dart';
+
 import '../../../../../core/utils/app_imports.dart';
-import '../../../presentation/manager/home_cubit.dart';
-import '../../../../home/domain/entities/home.dart';
+ import '../../../../home/domain/entities/home.dart';
 import '../widgets/device_card.dart';
 import 'device_detail_screen.dart';
 import 'device_pairing_screen.dart';
