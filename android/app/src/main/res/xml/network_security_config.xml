@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for Tuya SDK communication -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Domain specific security configurations -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">tuya.com</domain>
+        <domain includeSubdomains="true">tuyacn.com</domain>
+        <domain includeSubdomains="true">tuyaus.com</domain>
+        <domain includeSubdomains="true">tuyaeu.com</domain>
+        <domain includeSubdomains="true">tuyain.com</domain>
+        <domain includeSubdomains="true">wgine.com</domain>
+        <domain includeSubdomains="true">tuya-inc.com</domain>
+    </domain-config>
+</network-security-config> 

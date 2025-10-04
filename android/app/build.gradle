@@ -1,0 +1,148 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+android {
+    namespace "com.zerotechiot.smart_home_tuya"
+    compileSdk 34
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        main.assets.srcDirs += ['../../TuyaSDK/6.2.0/assets']
+        main.res.srcDirs += ['../../TuyaSDK/6.2.0/res']
+    }
+
+    // Add signing configs for debug and release builds
+    // This is required by Tuya SDK for security verification
+    signingConfigs {
+        debug {
+            // You should replace these with your actual keystore information
+            // For development purposes, you can use the debug keystore
+            storeFile file("${System.properties['user.home']}/.android/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.zerotechiot.smart_home_tuya"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
+        
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // Add repositories for Tuya SDK
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+        maven { url 'https://maven-other.tuya.com/repository/maven-releases/' }
+        maven { url 'https://maven-other.tuya.com/repository/maven-snapshots/' }
+    }
+    
+    // Fix lint error
+    lintOptions {
+        disable 'InvalidPackage'
+        checkReleaseBuilds false
+    }
+
+    // Prevent duplicate classes error and native library conflicts
+    packagingOptions {
+        // Exclude duplicate META-INF files
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude 'META-INF/*.kotlin_module'
+        
+        // Pick first for duplicate native libraries
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libgnustl_shared.so'
+        pickFirst 'lib/armeabi-v7a/libgnustl_shared.so'
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    
+    // MultiDex support
+    implementation 'androidx.multidex:multidex:2.0.1'
+    
+    // Required by Tuya SDK based on dependencies.txt
+    implementation 'com.alibaba:fastjson:1.1.67.android'
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.14.9'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.android.material:material:1.9.0'
+    
+    // Tuya Smart SDK Core - Using working version
+    implementation 'com.tuya.smart:tuyasmart:3.25.0'
+    
+    // Tuya Security Algorithm - Using the working version you provided
+    implementation(name: 'security-algorithm-1.0.0-beta', ext: 'aar')
+    
+    // Optional - Add Tuya BizBundles (uncomment as needed)
+    // implementation 'com.tuya.smart:tuyasmart-bizbundle-device_activator:3.25.0'
+} 

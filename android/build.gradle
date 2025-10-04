@@ -1,0 +1,56 @@
+// This file configures the Gradle build system for Android projects.
+// For details, see: https://developer.android.com/build
+
+buildscript {
+    ext.kotlin_version = '1.8.22'
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven-other.tuya.com/repository/maven-releases/' }
+        maven { url 'https://maven-other.tuya.com/repository/maven-snapshots/' }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven-other.tuya.com/repository/maven-releases/' }
+        maven { url 'https://maven-other.tuya.com/repository/maven-snapshots/' }
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    project.evaluationDependsOn(':app')
+    
+    // Set Java compatibility for all Android projects
+    project.plugins.withId('com.android.application') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+    
+    project.plugins.withId('com.android.library') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+}
+
+// Clean target directory when build command is executed
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+} 

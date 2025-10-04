@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ZeroTech IoT</string>
+    <!-- SHA256 hash values from Tuya Developer Platform -->
+    <string name="tuya_sha256_value_1">7F5E587A8FF9:1B21452CFD386A482C347AF0D23F:7770</string>
+    <string name="tuya_sha256_value_2">DA38:B197C38741:48:6DB177A:64D5C50A6325:83:015B</string>
+</resources> 
