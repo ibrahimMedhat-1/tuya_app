@@ -2,6 +2,24 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://maven-other.tuya.com/repository/maven-releases/") }
+        maven { url = uri("https://maven-other.tuya.com/repository/maven-commercial-releases/") }
+        maven { url = uri("https://jitpack.io") }
+        // Add JCenter mirror for old dependencies
+        maven { url = uri("https://maven.aliyun.com/repository/jcenter") }
+    }
+    
+    // Global dependency resolution strategy - excludes conflicting libraries
+    configurations.all {
+        resolutionStrategy {
+            force("com.google.code.findbugs:jsr305:1.3.9")
+            force("com.squareup.okhttp3:okhttp-jvm:5.0.0-alpha.11")
+            force("com.squareup.okhttp3:okhttp-urlconnection:5.0.0-alpha.11")
+            force("com.squareup.okio:okio-jvm:3.2.0")
+        }
+        // Exclude commons-io globally to prevent conflicts (embedded in Tuya SDK)
+        exclude(group = "commons-io", module = "commons-io")
+        exclude(group = "org.apache.commons", module = "commons-lang3")
     }
 }
 

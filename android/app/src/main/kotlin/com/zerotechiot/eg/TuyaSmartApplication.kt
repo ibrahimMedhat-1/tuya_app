@@ -2,11 +2,12 @@ package com.zerotechiot.eg
 
 import android.app.Application
 import android.util.Log
+import com.facebook.drawee.backends.pipeline.Fresco
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 
 /**
- * Custom Application class for initializing Tuya SDK
- * This follows the official Tuya SDK v3.25.0 documentation and sample
+ * Custom Application class for initializing Tuya SDK and BizBundle
+ * Based on stable working app structure
  */
 class TuyaSmartApplication : Application() {
     private val TAG = "TuyaSmartApplication"
@@ -15,9 +16,12 @@ class TuyaSmartApplication : Application() {
     private val APP_KEY = "xxft3fqw93d375ucppkn"
     private val APP_SECRET = "k8u9edtefgrwcmkqaesra9gmgmpuh8uy"
 
-      fun initSdk() { // Add savedInstanceState parameter
+    fun initSdk() {
+        Log.d(TAG, "Initializing Tuya SDK and BizBundle")
 
-        Log.d(TAG, "TuyaSmartApplication onCreate()")
+        // Initialize Fresco (required by BizBundle UI components)
+        Fresco.initialize(this)
+        Log.d(TAG, "Fresco initialized")
 
         // Enable debug mode during development
         ThingHomeSdk.setDebugMode(true)
@@ -25,13 +29,12 @@ class TuyaSmartApplication : Application() {
         // Initialize the SDK with application context, appKey and appSecret
         ThingHomeSdk.init(this, APP_KEY, APP_SECRET)
 
-        // Set callback for login requirement
-        Log.d(TAG, "Tuya SDK pre-initialization complete")
+        Log.d(TAG, "Tuya SDK initialized successfully")
     }
 
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "TuyaSmartApplication's own onCreate() called")
-        initSdk() // <<---- CORRECT PLACE TO CALL THIS
+        initSdk()
     }
 }
