@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.Packaging
 import org.jetbrains.kotlin.util.profile
 
 plugins {
@@ -34,15 +35,22 @@ android {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a","x86","x86_64")
         }
     }
-    packagingOptions {
+    fun Packaging.() {
         jniLibs {
-            pickFirsts += setOf("lib/*/liblog.so", "lib/*/libc++_shared.so", "lib/*/libyuv.so", "lib/*/libopenh264.so", "lib/*/libv8wrapper.so", "lib/*/libv8android.so")
+            pickFirsts += setOf(
+                "lib/*/liblog.so",
+                "lib/*/libc++_shared.so",
+                "lib/*/libyuv.so",
+                "lib/*/libopenh264.so",
+                "lib/*/libv8wrapper.so",
+                "lib/*/libv8android.so"
+            )
         }
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("/Users/ibrahim/StudioProjects/tuya_app/android/app/sha 256.jks")
+            storeFile = file("C:\\Users\\i.medhat\\StudioProjects\\tuya_app\\android\\app\\sha 256.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"
@@ -90,11 +98,12 @@ dependencies {
     implementation("com.thingclips.smart:thingsmart:6.7.3") {
         exclude(module = "thingsmart-modularCampAnno")
     }
-
-    implementation("com.thingclips.android.module:thingmodule-annotation:1.5.0-SNAPSHOT")
-    implementation("com.thingclips.smart:thingsmart-modularCampAnno:1.0.0-SNAPSHOT")
-    implementation("com.thingclips.smart:thingsmart-device-detail-core-kit:6.7.0")
-    implementation("com.thingclips.smart:thingsmart-device-detail-core-kit:6.7.0")
-    implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0")
+    implementation("com.thingclips.smart:ThingSmartActivatorExtraBizBundle:5.0.0")
+    implementation("com.tuya.android.module:tymodule-config:latestVersion")
+    implementation("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.25")
+//    implementation("com.thingclips.android.module:thingmodule-annotation:1.5.0-SNAPSHOT")
+//    implementation("com.thingclips.smart:thingsmart-modularCampAnno:1.0.0-SNAPSHOT")
+//    implementation("com.thingclips.smart:thingsmart-device-detail-core-kit:6.7.0")
+//    implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
 }
