@@ -42,7 +42,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("/Users/ahmedghareb/StudioProjects/tuya_app/android/app/sha.jks")
+            storeFile = file("/Users/ibrahim/StudioProjects/tuya_app/android/app/sha 256.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"
@@ -90,5 +90,11 @@ dependencies {
     implementation("com.thingclips.smart:thingsmart:6.7.3") {
         exclude(module = "thingsmart-modularCampAnno")
     }
+
+    implementation("com.thingclips.android.module:thingmodule-annotation:1.5.0-SNAPSHOT")
+    implementation("com.thingclips.smart:thingsmart-modularCampAnno:1.0.0-SNAPSHOT")
+    implementation("com.thingclips.smart:thingsmart-device-detail-core-kit:6.7.0")
+    implementation("com.thingclips.smart:thingsmart-device-detail-core-kit:6.7.0")
+    implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
 }

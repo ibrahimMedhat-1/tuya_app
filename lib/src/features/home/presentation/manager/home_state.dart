@@ -1,6 +1,6 @@
 part of 'home_cubit.dart';
 
-enum HomeStatus { initial, loading, homesLoaded, devicesLoaded, failure }
+enum HomeStatus { initial, loading, homesLoaded, devicesLoaded, pairing,failure }
 
 class HomeState   {
   final HomeStatus status;

@@ -5,7 +5,7 @@ class TuyaHomeDataSource {
     try {
       final result = await AppConstants.channel.invokeMethod('getHomes');
        final List list = result as List;
-      return list.cast<Map>().map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      return list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     } on PlatformException catch (e) {
       throw Exception('getHomes failed: ${e.message}');
     }
@@ -17,7 +17,7 @@ class TuyaHomeDataSource {
         'homeId': homeId,
       });
        final List list = result as List;
-      return list.cast<Map>().map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      return list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     } on PlatformException catch (e) {
       throw Exception('getHomeDevices failed: ${e.message}');
     }
@@ -34,6 +34,15 @@ class TuyaHomeDataSource {
       throw Exception('controlDevice failed: ${e.message}');
     }
   }
+
+  Future pairDevices()async{
+    try {
+      await AppConstants.channel.invokeMethod('pairDevices');
+    } on PlatformException catch (e) {
+      throw Exception('pairing devices failed: ${e.message}');
+    }
+  }
+
 }
 
 

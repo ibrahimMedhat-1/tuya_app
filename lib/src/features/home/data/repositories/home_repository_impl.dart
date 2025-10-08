@@ -25,6 +25,11 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<void> controlDevice({required String deviceId, required Map<String,Object> dps}) async {
     await _dataSource.controlDevice(deviceId: deviceId, dps: dps);
   }
+
+  @override
+  Future pairDevices()async{
+    await _dataSource.pairDevices();
+  }
 }
 
 

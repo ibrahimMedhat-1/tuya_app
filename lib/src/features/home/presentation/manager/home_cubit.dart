@@ -9,8 +9,9 @@ class HomeCubit extends Cubit<HomeState> {
   final GetUserHomesUseCase _getUserHomes;
   final GetHomeDevicesUseCase _getHomeDevices;
   final ControlDeviceUseCase _controlDevice;
+  final PairDeviceUseCase _pairDeviceUseCase;
 
-  HomeCubit(this._getUserHomes, this._getHomeDevices, this._controlDevice) : super(HomeState.initial());
+  HomeCubit(this._getUserHomes, this._getHomeDevices, this._controlDevice,this._pairDeviceUseCase) : super(HomeState.initial());
 
   Future<void> loadHomes() async {
     emit(state.copyWith(status: HomeStatus.loading, errorMessage: null));
@@ -32,51 +33,14 @@ class HomeCubit extends Cubit<HomeState> {
       emit(state.copyWith(status: HomeStatus.failure, errorMessage: e.toString()));
     }
   }
-
-  Future<void> toggleDevice(String deviceId, bool on) async {
+  pairDevices()async{
+    emit(state.copyWith(status: HomeStatus.loading, errorMessage: null));
     try {
-      await _controlDevice(deviceId: deviceId, dps: { "1": on });
-      final updated = state.devices.map((d) {
-        if (d.deviceId == deviceId) {
-          return d.copyWith(
-            currentState: {...d.currentState, "1": on},
-          );
-        }
-        return d;
-      }).toList();
-      emit(state.copyWith(devices: updated));
-    } catch (e) {
+   await _pairDeviceUseCase();
+      emit(state.copyWith(status: HomeStatus.pairing));
+     } catch (e) {
       emit(state.copyWith(status: HomeStatus.failure, errorMessage: e.toString()));
     }
-  }
-
-  Future<void> controlDevice(String deviceId, Map<String, Object> dps) async {
-    try {
-      await _controlDevice(deviceId: deviceId, dps: dps);
-      final updated = state.devices.map((d) {
-        if (d.deviceId == deviceId) {
-          return d.copyWith(
-            currentState: {...d.currentState, ...dps},
-          );
-        }
-        return d;
-      }).toList();
-      emit(state.copyWith(devices: updated));
-    } catch (e) {
-      emit(state.copyWith(status: HomeStatus.failure, errorMessage: e.toString()));
-    }
-  }
-
-  Future<void> setBrightness(String deviceId, int brightness) async {
-    await controlDevice(deviceId, {"2": brightness});
-  }
-
-  Future<void> setColor(String deviceId, String color) async {
-    await controlDevice(deviceId, {"4": color});
-  }
-
-  Future<void> setTemperature(String deviceId, int temperature) async {
-    await controlDevice(deviceId, {"3": temperature});
   }
 }
 

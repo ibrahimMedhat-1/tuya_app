@@ -1,15 +1,19 @@
 package com.zerotechiot.eg
 
 import android.util.Log
+import com.thingclips.smart.activator.core.kit.ThingActivatorCoreKit
+import com.thingclips.smart.activator.core.kit.bean.ThingActivatorScanDeviceBean
+import com.thingclips.smart.activator.core.kit.bean.ThingActivatorScanFailureBean
+import com.thingclips.smart.activator.core.kit.callback.ThingActivatorScanCallback
+import com.thingclips.smart.android.ble.api.ScanType
 import com.thingclips.smart.android.user.api.ILoginCallback
+import com.thingclips.smart.android.user.api.ILogoutCallback
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.android.user.bean.User
 import com.thingclips.smart.home.sdk.bean.HomeBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
-import com.thingclips.smart.sdk.api.IResultCallback
-import com.thingclips.smart.sdk.api.IThingDevice
-import io.flutter.embedding.android.FlutterActivity
+ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
@@ -33,7 +37,18 @@ class MainActivity : FlutterActivity() {
                         result.error("INVALID_ARGUMENTS", "Email and password are required", null)
                     }
                 }
+                "logout" -> {
+                     // Use the Tuya SDK v3.25.0 logout method
+                    ThingHomeSdk.getUserInstance().logout(object : ILogoutCallback {
+                        override fun onSuccess() {
+                            result.success(null)
+                        }
 
+                        override fun onError(code: String, error: String) {
+                             result.error(code, error, null)
+                        }
+                    })
+                }
                 "isLoggedIn" -> {
                     checkLoginStatus(result)
                 }
@@ -52,40 +67,24 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
-                "controlDevice" -> {
+                "pairDevices" -> {
                     val deviceId = call.argument<String>("deviceId")
-                    // If your Flutter side sends a Map, this is fine.
-                    // However, the current publishDps(dps.toString(), ...) in your controlDevice
-                    // method might be an issue if publishDps expects a valid JSON string
-                    // and dps.toString() doesn't produce it.
-                    // Consider using iThingDevice.publishCommands(dps, callback) if dps is a Map.
-                    val dps = call.argument<Map<String, Any>>("dps") // Changed to Map<String, Any> for flexibility
-                    if (deviceId != null && dps != null) {
-                        Log.d(
-                            "TuyaSDK",
-                            "control device dps: devId=${deviceId}, dps=${dps}"
-                        )
-                        controlDevice(deviceId, dps, result)
+                    if (deviceId != null) {
+                        pairDevices(result)
                     } else {
-                        result.error("INVALID_ARGUMENTS", "deviceId and dps are required", null)
+                        result.error("INVALID_ARGUMENTS", "deviceId is required", null)
                     }
                 }
 
-//                "goToDevicePanel" -> { // New case added
-//                    val deviceId = call.argument<String>("deviceId")
-//                    if (deviceId != null) {
-//                        goToDevicePanel(deviceId, result)
-//                    } else {
-//                        result.error("INVALID_ARGUMENTS", "deviceId is required", null)
-//                    }
-//                }
+
+
+
 
                 else -> result.notImplemented()
             }
         }
     }
-
-    private fun loginUser(email: String, password: String, result: MethodChannel.Result) {
+     private fun loginUser(email: String, password: String, result: MethodChannel.Result) {
         ThingHomeSdk.getUserInstance().loginWithEmail(
             "US", // Country code
             email,
@@ -148,41 +147,6 @@ class MainActivity : FlutterActivity() {
         })
     }
 
-    // Note on controlDevice:
-    // If 'dps' is intended to be a structured map of DP commands,
-    // consider using iThingDevice.publishCommands(dps, callback) instead of publishDps(dps.toString(), ...).
-    // The dps.toString() might not produce a valid JSON string that publishDps (string variant) expects.
-    // For now, I've changed the argument type to Map<String, Any> for better type safety.
-    private fun controlDevice(deviceId: String, dps: Map<String, Any>, result: MethodChannel.Result) {
-        val iThingDevice: IThingDevice = ThingHomeSdk.newDeviceInstance(deviceId)
-        // This is the line that might need changing if dps is a map.
-        // If publishDps requires a JSON string: You'd need to convert the Map to a JSON string here.
-        // If you can use publishCommands (which takes a Map):
-        // iThingDevice.publishCommands(dps, object : IResultCallback { ... }) would be more direct.
-        // Convert Map to JSON string properly
-        val jsonObject = org.json.JSONObject()
-        for ((key, value) in dps) {
-            jsonObject.put(key, value)
-        }
-        val dpsJsonString = jsonObject.toString()
-        
-        Log.d("TuyaSDK", "control device dps: devId=${deviceId}, dps=${dpsJsonString}")
-        
-        iThingDevice.publishDps(dpsJsonString, object : IResultCallback {
-            override fun onError(code: String, error: String) {
-                Log.d(
-                    "TuyaSDK",
-                    "control device error: devId=${deviceId}, dps=${dpsJsonString}, code=${code}, error=${error}"
-                )
-                result.error("CONTROL_DEVICE_FAILED", error, null)
-            }
-
-            override fun onSuccess() {
-                Log.d("TuyaSDK", "control device success: devId=${deviceId}, dps=${dpsJsonString}")
-                result.success(null)
-            }
-        })
-    }
 
     private fun checkLoginStatus(result: MethodChannel.Result) {
         val user = ThingHomeSdk.getUserInstance().user
@@ -198,17 +162,41 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-//    // New function to navigate to the device panel
-//    private fun goToDevicePanel(deviceId: String, result: MethodChannel.Result) {
-//        try {
-//            // Use this@MainActivity to ensure you're passing the Activity context
-//            ThingHomeSdk.getBizBundleService().goToDeviceDetail(this@MainActivity, deviceId)
-//            result.success(null) // Indicate that the attempt to launch was made
-//        } catch (e: Exception) {
-//            Log.e("TuyaSDK", "Error launching device panel for $deviceId", e)
-//            result.error("GOTO_DEVICE_PANEL_FAILED", "Failed to launch device panel: ${e.message}", null)
-//        }
-//    }
+    private fun pairDevices(  result: MethodChannel.Result) {
+        try {
+            ThingActivatorCoreKit.getScanDeviceManager()
+                .startBlueToothDeviceSearch(
+                    25 * 1000L,
+                    arrayListOf(ScanType.MESH, ScanType.SIG_MESH, ScanType.SINGLE, ScanType.THING_BEACON),
+                    object : ThingActivatorScanCallback {
+                        override fun deviceFound(deviceBean: ThingActivatorScanDeviceBean) {
+                            // Device discovery
+                        }
+
+                        override fun deviceRepeat(deviceBean: ThingActivatorScanDeviceBean) {
+                            // Repeated discovery
+                        }
+
+                        override fun deviceUpdate(deviceBean: ThingActivatorScanDeviceBean) {
+                            // Device capability update. This method will not be called back during a scan for a single Bluetooth device.
+                        }
+
+                        override fun scanFailure(failureBean: ThingActivatorScanFailureBean) {
+                            // Device discovery failed
+                        }
+
+                        override fun scanFinish() {
+                            // Search finished
+                        }
+
+                    })
+            result.success(null)
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Failed to open device control panel: ${e.message}")
+            result.error("OPEN_PANEL_FAILED", "Failed to open device control panel: ${e.message}", null)
+        }
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()

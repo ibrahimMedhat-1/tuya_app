@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:tuya_app/src/core/utils/app_imports.dart';
 import 'package:tuya_app/src/features/home/domain/entities/device.dart';
 
 class DeviceCard extends StatelessWidget {
   final DeviceEntity device;
   final VoidCallback? onTap;
-  final Function(bool)? onToggle;
-  final bool isLoading;
+   final bool isLoading;
+
+  static const MethodChannel _channel = MethodChannel('com.zerotechiot.eg/tuya_sdk');
 
   const DeviceCard({
     super.key,
     required this.device,
     this.onTap,
-    this.onToggle,
-    this.isLoading = false,
+     this.isLoading = false,
   });
 
   @override
@@ -24,7 +25,7 @@ class DeviceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: _handleCardTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -94,16 +95,7 @@ class DeviceCard extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                  if (onToggle != null)
-                    SizedBox(
-                      height: 24,
-                      child: Switch(
-                        value: device.isOn,
-                        onChanged: isLoading ? null : onToggle,
-                        activeColor: Colors.blue.shade600,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
+
                 ],
               ),
             ],
@@ -146,6 +138,25 @@ class DeviceCard extends StatelessWidget {
         return Icons.speaker;
       default:
         return Icons.device_hub;
+    }
+  }
+
+  void _handleCardTap() {
+    if (onTap != null) {
+      onTap!();
+    } else {
+      _openDeviceControlPanel();
+    }
+  }
+
+  Future<void> _openDeviceControlPanel() async {
+    try {
+      await _channel.invokeMethod('openDeviceControlPanel', {
+        'deviceId': device.deviceId,
+      });
+    } on PlatformException catch (e) {
+      debugPrint("Failed to open device control panel: '${e.message}'.");
+      // You can show a snackbar or dialog here to inform the user
     }
   }
 }

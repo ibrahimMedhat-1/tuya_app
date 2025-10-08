@@ -1,10 +1,6 @@
-import 'package:tuya_app/src/features/home/domain/entities/device.dart';
-
 import '../../../../../core/utils/app_imports.dart';
- import '../../../../home/domain/entities/home.dart';
+import '../../../../home/domain/entities/home.dart';
 import '../widgets/device_card.dart';
-import 'device_detail_screen.dart';
-import 'device_pairing_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -121,8 +117,10 @@ class HomeScreen extends StatelessWidget {
                           final device = state.devices[index];
                           return DeviceCard(
                             device: device,
-                            onTap: () => _navigateToDeviceDetail(context, device),
-                            onToggle: (value) => context.read<HomeCubit>().toggleDevice(device.deviceId, value),
+                            onTap: () {
+                              /// ToDo: control device here
+                            },
+
                           );
                         },
                         childCount: state.devices.length,
@@ -173,7 +171,7 @@ class HomeScreen extends StatelessWidget {
           },
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _showAddDeviceDialog(context),
+          onPressed: () => context.read<HomeCubit>().pairDevices(),
           icon: const Icon(Icons.add),
           label: const Text('Add Device'),
           backgroundColor: Colors.blue.shade600,
@@ -222,19 +220,5 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _navigateToDeviceDetail(BuildContext context, DeviceEntity device) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => DeviceDetailScreen(device: device),
-      ),
-    );
-  }
 
-  void _showAddDeviceDialog(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const DevicePairingScreen(),
-      ),
-    );
-  }
 }

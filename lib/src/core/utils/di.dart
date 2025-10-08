@@ -21,11 +21,13 @@ Future<void> getItInit() async {
   sl.registerLazySingleton<GetUserHomesUseCase>(() => GetUserHomesUseCase(sl<HomeRepository>()));
   sl.registerLazySingleton<GetHomeDevicesUseCase>(() => GetHomeDevicesUseCase(sl<HomeRepository>()));
   sl.registerLazySingleton<ControlDeviceUseCase>(() => ControlDeviceUseCase(sl<HomeRepository>()));
+  sl.registerLazySingleton<PairDeviceUseCase>(() => PairDeviceUseCase(sl<HomeRepository>()));
 
   // Presentation
   sl.registerFactory<HomeCubit>(() => HomeCubit(
         sl<GetUserHomesUseCase>(),
         sl<GetHomeDevicesUseCase>(),
         sl<ControlDeviceUseCase>(),
+        sl<PairDeviceUseCase>(),
       ));
 }
