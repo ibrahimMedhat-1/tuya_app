@@ -40,9 +40,8 @@ class HomeState   {
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
+   List<Object?> get props => [status, homes, devices, selectedHomeId, errorMessage];
 
-  @override
-  List<Object?> get props => [status, homes, devices, selectedHomeId, errorMessage];
-}
+ }
 
 

@@ -7,176 +7,177 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<HomeCubit>()..loadHomes(),
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        appBar: AppBar(
-          title: const Text(
-            'Smart Home',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        title: const Text(
+          'Smart Home',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: () {
-                // TODO: Add settings or profile functionality
-              },
-              icon: const Icon(Icons.settings_outlined),
-            ),
-          ],
         ),
-        body: BlocBuilder<HomeCubit, HomeState>(
-          builder: (context, state) {
-            if (state.status == HomeStatus.loading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            
-            if (state.status == HomeStatus.failure) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red.shade300,
-                    ),
-                    16.height,
-                    Text(
-                      state.errorMessage ?? 'Something went wrong',
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    16.height,
-                    ElevatedButton(
-                      onPressed: () => context.read<HomeCubit>().loadHomes(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              );
-            }
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // TODO: Add settings or profile functionality
+            },
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
+      body: BlocBuilder<HomeCubit, HomeState>(
+        builder: (context, state) {
+          if (state.status == HomeStatus.loading && state.homes.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-            return CustomScrollView(
-              slivers: [
-                // Header Section
+          if (state.status == HomeStatus.failure) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red.shade300,
+                  ),
+                  16.height,
+                  Text(
+                    state.errorMessage ?? 'Something went wrong',
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                  16.height,
+                  ElevatedButton(
+                    onPressed: () => context.read<HomeCubit>().loadHomes(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return CustomScrollView(
+            slivers: [
+              // Header Section
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: context.responsivePadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Welcome Message
+                      Text(
+                        'Welcome back!',
+                        style: TextStyle(
+                          fontSize: 28 * context.responsiveFontMultiplier,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      8.height,
+                      Text(
+                        'Control your smart devices',
+                        style: TextStyle(
+                          fontSize: 16 * context.responsiveFontMultiplier,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      24.height,
+
+                      // Home Selector
+                      _buildHomeSelector(context, state),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Devices Section
+              if (state.status == HomeStatus.devicesLoaded)
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.responsivePadding.horizontal / 2,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: context.isMobile ? 2 : context.isTablet ? 3 : 4,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final device = state.devices[index];
+                        return DeviceCard(
+                          device: device,
+                          onTap: () {
+                            final dps = Map<String, Object>.from(device.dps);
+                            final currentStatus = dps['1'] as bool? ?? false;
+                            context.read<HomeCubit>().controlDevice(
+                                  deviceId: device.id,
+                                  dps: {'1': !currentStatus},
+                                );
+                          },
+                        );
+                      },
+                      childCount: state.devices.length,
+                    ),
+                  ),
+                )
+              else if (state.selectedHomeId != null)
+                const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                )
+              else
                 SliverToBoxAdapter(
                   child: Container(
-                    padding: context.responsivePadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Welcome Message
-                        Text(
-                          'Welcome back!',
-                          style: TextStyle(
-                            fontSize: 28 * context.responsiveFontMultiplier,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        8.height,
-                        Text(
-                          'Control your smart devices',
-                          style: TextStyle(
-                            fontSize: 16 * context.responsiveFontMultiplier,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        24.height,
-                        
-                        // Home Selector
-                        _buildHomeSelector(context, state),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                // Devices Section
-                if (state.status == HomeStatus.devicesLoaded)
-                  SliverPadding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: context.responsivePadding.horizontal / 2,
-                    ),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: context.isMobile ? 2 : context.isTablet ? 3 : 4,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        childAspectRatio: 0.85,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final device = state.devices[index];
-                          return DeviceCard(
-                            device: device,
-                            onTap: () {
-                              /// ToDo: control device here
-                            },
-
-                          );
-                        },
-                        childCount: state.devices.length,
-                      ),
-                    ),
-                  )
-                else if (state.selectedHomeId != null)
-                  const SliverToBoxAdapter(
+                    padding: const EdgeInsets.all(32),
                     child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  )
-                else
-                  SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.all(32),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.home_outlined,
-                              size: 64,
-                              color: Colors.grey.shade400,
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.home_outlined,
+                            size: 64,
+                            color: Colors.grey.shade400,
+                          ),
+                          16.height,
+                          Text(
+                            'Select a home to view devices',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
                             ),
-                            16.height,
-                            Text(
-                              'Select a home to view devices',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                
-                // Add some bottom padding
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 100),
                 ),
-              ],
-            );
-          },
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.read<HomeCubit>().pairDevices(),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Device'),
-          backgroundColor: Colors.blue.shade600,
-          foregroundColor: Colors.white,
-        ),
+
+              // Add some bottom padding
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.read<HomeCubit>().pairDevices(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Device'),
+        backgroundColor: Colors.blue.shade600,
+        foregroundColor: Colors.white,
       ),
     );
   }

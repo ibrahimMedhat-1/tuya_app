@@ -13,7 +13,7 @@ Future<void> getItInit() async {
   sl.registerLazySingleton<TuyaAuthDataSource>(() => TuyaAuthDataSource());
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl<TuyaAuthDataSource>()));
   sl.registerLazySingleton<AuthUseCase>(() => AuthUseCase(sl<AuthRepository>()));
-  sl.registerFactory<AuthCubit>(() => AuthCubit());
+  sl.registerFactory<AuthCubit>(() => AuthCubit(sl<AuthUseCase>()));
 
   // Home feature
   sl.registerLazySingleton<TuyaHomeDataSource>(() => TuyaHomeDataSource());
@@ -27,7 +27,7 @@ Future<void> getItInit() async {
   sl.registerFactory<HomeCubit>(() => HomeCubit(
         sl<GetUserHomesUseCase>(),
         sl<GetHomeDevicesUseCase>(),
-        sl<ControlDeviceUseCase>(),
+        // sl<ControlDeviceUseCase>(),
         sl<PairDeviceUseCase>(),
       ));
 }

@@ -1,3 +1,6 @@
+import 'package:tuya_app/src/core/error/failures.dart';
+import 'package:tuya_app/src/core/utils/either.dart';
+
 import '../entities/device.dart';
 import '../entities/home.dart';
 import '../repositories/home_repository.dart';
@@ -7,7 +10,7 @@ class GetUserHomesUseCase {
 
   GetUserHomesUseCase(this._repository);
 
-  Future<List<HomeEntity>> call() => _repository.getUserHomes();
+  Future<Either<Failure, List<HomeEntity>>> call() => _repository.getUserHomes();
 }
 
 class GetHomeDevicesUseCase {
@@ -15,7 +18,7 @@ class GetHomeDevicesUseCase {
 
   GetHomeDevicesUseCase(this._repository);
 
-  Future<List<DeviceEntity>> call(int homeId) =>
+  Future<Either<Failure, List<DeviceEntity>>> call(int homeId) =>
       _repository.getHomeDevices(homeId);
 }
 
@@ -24,10 +27,11 @@ class ControlDeviceUseCase {
 
   ControlDeviceUseCase(this._repository);
 
-  Future<void> call({
+  Future<Either<Failure, void>> call({
     required String deviceId,
     required Map<String, Object> dps,
-  }) => _repository.controlDevice(deviceId: deviceId, dps: dps);
+  }) =>
+      _repository.controlDevice(deviceId: deviceId, dps: dps);
 }
 
 class PairDeviceUseCase {
@@ -35,5 +39,5 @@ class PairDeviceUseCase {
 
   PairDeviceUseCase(this._repository);
 
-  Future<void> call() => _repository.pairDevices();
+  Future<Either<Failure, void>> call() => _repository.pairDevices();
 }

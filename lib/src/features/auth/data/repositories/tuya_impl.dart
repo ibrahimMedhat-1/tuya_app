@@ -1,28 +1,25 @@
 
+import 'package:tuya_app/src/core/error/failures.dart';
+import 'package:tuya_app/src/core/utils/either.dart';
+
 import '../../../../core/utils/app_imports.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final TuyaAuthDataSource _dataSource;
 
-  AuthRepositoryImpl(TuyaAuthDataSource dataSource) : _dataSource = dataSource;
+  AuthRepositoryImpl(this._dataSource);
 
   @override
-  Future<User> login(String email, String password) async {
+  Future<Either<Failure, User>> login(String email, String password) async {
     return await _dataSource.login(email, password);
   }
-
   @override
-  Future<User?> isLoggedIn() async {
+  Future<Either<Failure, User?>> isLoggedIn() async {
     return await _dataSource.isLoggedIn();
   }
 
   @override
-  Future<void> logout() async {
+  Future<Either<Failure, void>> logout() async {
     return await _dataSource.logout();
   }
-
-
-
-
-
 }

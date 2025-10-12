@@ -3,42 +3,40 @@
 part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthCubitState> {
-  AuthCubit() : super(AuthCubitInitial());
-  AuthUseCase authUseCase = sl<AuthUseCase>();
+  final AuthUseCase _authUseCase;
 
-  Future<User> login(BuildContext context, String email, String password) async {
+  AuthCubit(this._authUseCase) : super(AuthCubitInitial());
+
+  Future<void> login(String email, String password) async {
     emit(AuthCubitLoading());
-    try {
-      final User user = await authUseCase.login(email, password);
-      emit(AuthCubitAuthenticated(user));
-      return user;
-    } catch (e) {
-      emit(AuthCubitError(e.toString()));
-      throw Exception('Login failed: ${e.toString()}');
-    }
+    final result = await _authUseCase.login(email, password);
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (user) => emit(AuthCubitAuthenticated(user)),
+    );
   }
 
   Future<void> checkLoginStatus() async {
     emit(AuthCubitLoading());
-    try {
-      final User? user = await authUseCase.isLoggedIn();
-      if (user != null) {
-        emit(AuthCubitAuthenticated(user));
-      } else {
-        emit(AuthCubitUnauthenticated());
-      }
-    } catch (e) {
-      emit(AuthCubitError(e.toString()));
-    }
+    final result = await _authUseCase.isLoggedIn();
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (user) {
+        if (user != null) {
+          emit(AuthCubitAuthenticated(user));
+        } else {
+          emit(AuthCubitUnauthenticated());
+        }
+      },
+    );
   }
 
   Future<void> logout() async {
     emit(AuthCubitLoading());
-    try {
-      await authUseCase.logout();
-      emit(AuthCubitUnauthenticated());
-    } catch (e) {
-      emit(AuthCubitError(e.toString()));
-    }
+    final result = await _authUseCase.logout();
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (_) => emit(AuthCubitUnauthenticated()),
+    );
   }
 }

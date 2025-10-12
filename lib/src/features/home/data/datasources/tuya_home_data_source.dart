@@ -1,48 +1,60 @@
+import 'package:tuya_app/src/core/error/failures.dart';
 import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:tuya_app/src/core/utils/either.dart';
 
 class TuyaHomeDataSource {
-  Future<List<Map<String, dynamic>>> getUserHomes() async {
+  Future<Either<Failure, List<Map<String, dynamic>>>> getUserHomes() async {
     try {
       final result = await AppConstants.channel.invokeMethod('getHomes');
-       final List list = result as List;
-      return list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      final List list = result as List;
+      return Right(list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList());
     } on PlatformException catch (e) {
-      throw Exception('getHomes failed: ${e.message}');
+      return Left(ServerFailure(e.message ?? 'Failed to get homes'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
-  Future<List<Map<String, dynamic>>> getHomeDevices(int homeId) async {
+  Future<Either<Failure, List<Map<String, dynamic>>>> getHomeDevices(
+      int homeId) async {
     try {
-       final result = await AppConstants.channel.invokeMethod('getHomeDevices', {
+      final result = await AppConstants.channel.invokeMethod('getHomeDevices', {
         'homeId': homeId,
       });
-       final List list = result as List;
-      return list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      final List list = result as List;
+      return Right(list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList());
     } on PlatformException catch (e) {
-      throw Exception('getHomeDevices failed: ${e.message}');
+      return Left(ServerFailure(e.message ?? 'Failed to get devices'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
-  Future<void> controlDevice({required String deviceId, required Map<String,Object> dps}) async {
+  Future<Either<Failure, void>> controlDevice(
+      {required String deviceId, required Map<String, Object> dps}) async {
     try {
-      print('controle dev : $deviceId $dps');
       await AppConstants.channel.invokeMethod('controlDevice', {
         'deviceId': deviceId,
         'dps': dps,
       });
+      return const Right(null);
     } on PlatformException catch (e) {
-      throw Exception('controlDevice failed: ${e.message}');
+      return Left(ServerFailure(e.message ?? 'Failed to control device'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
-  Future pairDevices()async{
+  Future<Either<Failure, void>> pairDevices() async {
     try {
       await AppConstants.channel.invokeMethod('pairDevices');
+      return const Right(null);
     } on PlatformException catch (e) {
-      throw Exception('pairing devices failed: ${e.message}');
+      return Left(ServerFailure(e.message ?? 'Failed to pair devices'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
-
 }
 
 

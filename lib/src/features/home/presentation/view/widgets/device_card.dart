@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+ import 'package:tuya_app/src/core/utils/app_imports.dart';
 import 'package:tuya_app/src/features/home/domain/entities/device.dart';
 
 class DeviceCard extends StatelessWidget {
