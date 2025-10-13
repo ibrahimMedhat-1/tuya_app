@@ -28,6 +28,14 @@ android {
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
+        
+        // Support for 16KB page size (required for Google Play and Android 15+)
+        // This ensures the app works on devices with 16KB page size
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+            }
+        }
     }
 
     packaging {
@@ -41,6 +49,9 @@ android {
             pickFirsts += "lib/*/libopenh264.so"
             pickFirsts += "lib/*/libv8wrapper.so"
             pickFirsts += "lib/*/libv8android.so"
+            // Fix SQLCipher library conflicts
+            pickFirsts += "lib/*/libsqlcipher.so"
+            pickFirsts += "lib/*/libwcdb.so"
         }
     }
 
@@ -103,7 +114,7 @@ dependencies {
     
     // Force specific versions to avoid conflicts
     implementation("com.squareup.okhttp3:okhttp:5.2.0")
-    implementation("com.squareup.okhttp3:okhttp-urlconnection:5.1.0")
+    implementation("com.squareup.okhttp3:okhttp-urlconnection:5.2.1")
     implementation("commons-io:commons-io:2.20.0")
 
     // Main Tuya SDK - use consistent version
@@ -119,25 +130,39 @@ dependencies {
         exclude(group = "commons-io", module = "commons-io")
     }
 
-    // Tuya BizBundle BOM for version management
-    api(enforcedPlatform("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.0"))
+    // Tuya BizBundle BOM for version management - MUST use platform()
+    implementation(platform("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.25"))
     
-    // Device Control UI BizBundle - REQUIRED
-    implementation("com.thingclips.smart:thingsmart-bizbundle-panel")
+    // Device Control UI BizBundle - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-panel") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
     
-    // Basic extension capabilities - REQUIRED
-    implementation("com.thingclips.smart:thingsmart-bizbundle-basekit")
+    // Basic extension capabilities - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-basekit") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
     
-    // Business extension capabilities - REQUIRED
-    implementation("com.thingclips.smart:thingsmart-bizbundle-bizkit")
+    // Business extension capabilities - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-bizkit") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
     
-    // Device control capabilities - REQUIRED
-    implementation("com.thingclips.smart:thingsmart-bizbundle-devicekit")
+    // Device control capabilities - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-devicekit") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
     
-    // Device Activator BizBundle
-    implementation("com.thingclips.smart:thingsmart-bizbundle-device_activator:6.7.0") {
+    // Device Activator BizBundle (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-device_activator") {
         exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
         exclude(group = "commons-io", module = "commons-io")
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
     }
 
     // Tuya theme SDK - required for BizBundle UI

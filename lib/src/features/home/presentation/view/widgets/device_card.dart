@@ -1,32 +1,41 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
+import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/features/home/domain/entities/device.dart';
 
 class DeviceCard extends StatelessWidget {
   final DeviceEntity device;
-  final VoidCallback? onTap;
-   final bool isLoading;
+  final bool isLoading;
+  final int? homeId;
+  final String? homeName;
 
   static const MethodChannel _channel = MethodChannel('com.zerotechiot.eg/tuya_sdk');
 
   const DeviceCard({
     super.key,
     required this.device,
-    this.onTap,
-     this.isLoading = false,
+    this.isLoading = false,
+    this.homeId,
+    this.homeName,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
+      elevation: context.isMobile ? 4 : 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(context.isMobile ? 16 : 12),
       ),
       child: InkWell(
         onTap: _handleCardTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(context.isMobile ? 16 : 12),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: context.responsivePadding,
+          constraints: BoxConstraints(
+            minHeight: context.isMobile ? 180 : 160,
+            maxHeight: context.isMobile ? 250 : 230,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
@@ -46,42 +55,82 @@ class DeviceCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Device Icon and Status
+              // Device Image and Status
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Device Image
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: context.isMobile ? 60 : 50,
+                    height: context.isMobile ? 60 : 50,
                     decoration: BoxDecoration(
-                      color: device.isOnline ? Colors.blue.shade100 : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(context.isMobile ? 12 : 10),
+                      border: Border.all(
+                        color: device.isOnline ? Colors.blue.shade200 : Colors.grey.shade300,
+                        width: context.isMobile ? 1.5 : 1,
+                      ),
                     ),
-                    child: Icon(
-                      _getDeviceIcon(),
-                      size: 24,
-                      color: device.isOnline ? Colors.blue.shade600 : Colors.grey.shade600,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(context.isMobile ? 12 : 10),
+                      child: _buildDeviceImage(context),
                     ),
                   ),
                   _buildStatusIndicator(),
                 ],
               ),
-              
+
               12.height,
-              
+
               // Device Name
               Text(
                 device.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: context.isMobile ? 16 : 14,
                 ),
-                maxLines: 2,
+                maxLines: context.isMobile ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
+              (context.isMobile ? 8 : 6).height,
+
+              // Device ID
+              Text(
+                'ID: ${device.deviceId}',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: context.isMobile ? 12 : 10,
+                  fontFamily: 'monospace',
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              (context.isMobile ? 8 : 6).height,
+
+              // Device Type
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.isMobile ? 8 : 6,
+                  vertical: context.isMobile ? 4 : 3,
+                ),
+                decoration: BoxDecoration(
+                  color: device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(context.isMobile ? 8 : 6),
+                ),
+                child: Text(
+                  device.deviceType.toUpperCase(),
+                  style: TextStyle(
+                    color: device.isOnline ? Colors.blue.shade700 : Colors.grey.shade600,
+                    fontSize: context.isMobile ? 10 : 8,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
               const Spacer(),
-              
-              // Control Section
+
+              // Status Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -89,11 +138,15 @@ class DeviceCard extends StatelessWidget {
                     device.isOnline ? 'Online' : 'Offline',
                     style: TextStyle(
                       color: device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontSize: context.isMobile ? 12 : 10,
                     ),
                   ),
-
+                  Icon(
+                    device.isOnline ? Icons.wifi : Icons.wifi_off,
+                    size: context.isMobile ? 16 : 14,
+                    color: device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
+                  ),
                 ],
               ),
             ],
@@ -103,14 +156,57 @@ class DeviceCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusIndicator() {
+  Widget _buildDeviceImage(BuildContext context) {
+    // If device has an image URL, try to load it
+    if (device.image.isNotEmpty && device.image.startsWith('http')) {
+      return Image.network(
+        device.image,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackIcon(context);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Colors.grey.shade100,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: context.isMobile ? 2 : 1.5,
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    // Fallback to device type icon
+    return _buildFallbackIcon(context);
+  }
+
+  Widget _buildFallbackIcon(BuildContext context) {
     return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: device.isOnline ? Colors.green : Colors.red,
-        shape: BoxShape.circle,
+      color: device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
+      child: Icon(
+        _getDeviceIcon(),
+        size: context.isMobile ? 28 : 24,
+        color: device.isOnline ? Colors.blue.shade600 : Colors.grey.shade600,
       ),
+    );
+  }
+
+  Widget _buildStatusIndicator() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = context.isMobile ? 8.0 : 6.0;
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: device.isOnline ? Colors.green : Colors.red,
+            shape: BoxShape.circle,
+          ),
+        );
+      },
     );
   }
 
@@ -140,17 +236,17 @@ class DeviceCard extends StatelessWidget {
   }
 
   void _handleCardTap() {
-    if (onTap != null) {
-      onTap!();
-    } else {
+
       _openDeviceControlPanel();
-    }
+
   }
 
   Future<void> _openDeviceControlPanel() async {
     try {
       await _channel.invokeMethod('openDeviceControlPanel', {
         'deviceId': device.deviceId,
+        'homeId': homeId,
+        'homeName': homeName ?? 'Home',
       });
     } on PlatformException catch (e) {
       debugPrint("Failed to open device control panel: '${e.message}'.");
@@ -158,3 +254,4 @@ class DeviceCard extends StatelessWidget {
     }
   }
 }
+

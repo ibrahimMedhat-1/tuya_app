@@ -1,13 +1,14 @@
 package com.zerotechiot.eg
 
+// BizBundle imports - these may need to be adjusted based on actual package structure
+// import com.thingclips.smart.bizbundle.basekit.microservice.AbsPanelCallerService
+// import com.thingclips.smart.bizbundle.basekit.microservice.MicroContext
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.thingclips.sdk.aistream.bean.ThingAgentTokenInfo
-import com.thingclips.sdk.user.bean.BizCodeDomainBean
 import com.thingclips.smart.activator.core.kit.ThingActivatorCoreKit
 import com.thingclips.smart.activator.core.kit.bean.ThingActivatorScanDeviceBean
 import com.thingclips.smart.activator.core.kit.bean.ThingActivatorScanFailureBean
@@ -16,17 +17,19 @@ import com.thingclips.smart.activator.core.kit.callback.ThingActivatorScanCallba
 import com.thingclips.smart.activator.plug.mesosphere.ThingDeviceActivatorManager
 import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.android.user.api.ILogoutCallback
-import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.android.user.bean.User
-import com.thingclips.smart.group.manager.ThingGroupBizKit
+import com.thingclips.smart.api.MicroContext
+import com.thingclips.smart.clearcache.api.ClearCacheService
+import com.thingclips.smart.commonbiz.bizbundle.family.api.AbsBizBundleFamilyService
+import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.home.sdk.bean.HomeBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
-import com.thingclips.smart.bizbundle.basekit.microservice.AbsPanelCallerService
-import com.thingclips.smart.bizbundle.basekit.microservice.MicroContext
+import com.thingclips.smart.panelcaller.api.AbsPanelCallerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+
 
 class MainActivity : FlutterActivity() {
     private val channel = "com.zerotechiot.eg/tuya_sdk"
@@ -91,9 +94,11 @@ class MainActivity : FlutterActivity() {
                 }
 
                 "openDeviceControlPanel" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val homeName = call.argument<String>("deviceId")
                     val deviceId = call.argument<String>("deviceId")
                     if (deviceId != null) {
-                        openDeviceControlPanel(deviceId, result)
+                        openDeviceControlPanel(deviceId, homeId?.toLong() ?: 0, homeName ?: "", result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "deviceId is required", null)
                     }
@@ -151,7 +156,7 @@ class MainActivity : FlutterActivity() {
                 val devices = homeBean?.deviceList?.map { device ->
                     mapOf(
                         "deviceId" to (device.devId ?: ""),
-                        "name" to (device.uiName ?: ""),
+                        "name" to (device.name ?: "no name"),
                         "isOnline" to device.isOnline,
                         "image" to device.iconUrl
                     )
@@ -183,62 +188,39 @@ class MainActivity : FlutterActivity() {
     }
 
 
-    private fun openDeviceControlPanel(deviceId: String, result: MethodChannel.Result) {
+    private fun openDeviceControlPanel(deviceId: String, homeId: Long, homeName: String, result: MethodChannel.Result) {
         try {
-            Log.d("TuyaSDK", "Opening device control panel for device: $deviceId using Tuya BizBundle")
+            Log.d(
+                "TuyaSDK",
+                "Opening device control panel for device: $deviceId using Tuya BizBundle"
+            )
+            try {
+                val cacheService = MicroContext.getServiceManager()
+                    .findServiceByInterface(ClearCacheService::class.java.name) as? ClearCacheService
+                cacheService?.clearCache(this)
+                // 1. Initialize home service first
+                val familyService = MicroContext.getServiceManager()
+                    .findServiceByInterface(AbsBizBundleFamilyService::class.java.name) as? AbsBizBundleFamilyService
+                familyService?.shiftCurrentFamily(homeId, homeName)
 
-            // Get device information using Tuya SDK
-            val deviceBean = ThingHomeSdk.getDataInstance().getDeviceBean(deviceId)
+                // 2. Then open panel
+                val service = MicroContext.getServiceManager()
+                    .findServiceByInterface(AbsPanelCallerService::class.java.name) as? AbsPanelCallerService
+                service?.goPanelWithCheckAndTip(this, deviceId)
 
-            if (deviceBean != null) {
-                Log.d("TuyaSDK", "Device found: ${deviceBean.name}, Online: ${deviceBean.isOnline}")
-
-                if (deviceBean.isOnline) {
-                    // Use the official Tuya BizBundle device control panel
-                    // This is the standard way as described in the Tuya documentation
-                    try {
-                        Log.d("TuyaSDK", "Getting AbsPanelCallerService from MicroContext")
-                        
-                        val service = MicroContext.getServiceManager()
-                            .findServiceByInterface(AbsPanelCallerService::class.java.name) as? AbsPanelCallerService
-                        
-                        if (service != null) {
-                            Log.d("TuyaSDK", "Opening device control panel using AbsPanelCallerService")
-                            
-                            // Navigate to device panel with check and tip as per Tuya documentation
-                            service.goPanelWithCheckAndTip(this@MainActivity, deviceId)
-                            
-                            Log.d("TuyaSDK", "Device control panel opened successfully for device: $deviceId")
-                            result.success("Device control panel opened successfully")
-                            
-                        } else {
-                            Log.e("TuyaSDK", "AbsPanelCallerService not found - BizBundle may not be properly initialized")
-                            result.error(
-                                "SERVICE_NOT_FOUND",
-                                "Device control service not available - BizBundle may not be properly initialized",
-                                null
-                            )
-                        }
-                        
-                    } catch (bizBundleException: Exception) {
-                        Log.e("TuyaSDK", "BizBundle control panel failed: ${bizBundleException.message}", bizBundleException)
-                        result.error(
-                            "BIZBUNDLE_FAILED",
-                            "Failed to open device control panel: ${bizBundleException.message}",
-                            null
-                        )
-                    }
-
-                } else {
-                    result.error(
-                        "DEVICE_OFFLINE",
-                        "Device is offline and cannot be controlled",
-                        null
-                    )
-                }
-            } else {
-                result.error("DEVICE_NOT_FOUND", "Device not found with ID: $deviceId", null)
+            } catch (bizBundleException: Exception) {
+                Log.e(
+                    "TuyaSDK",
+                    "BizBundle control panel failed: ${bizBundleException.message}",
+                    bizBundleException
+                )
+                result.error(
+                    "BIZBUNDLE_FAILED",
+                    "Failed to open device control panel: ${bizBundleException.message}",
+                    null
+                )
             }
+
 
         } catch (e: Exception) {
             Log.e("TuyaSDK", "Failed to open device control panel: ${e.message}", e)
@@ -301,43 +283,47 @@ class MainActivity : FlutterActivity() {
                 Log.d("TuyaSDK", "Context class: ${this.javaClass.name}")
                 // Try the BizBundle UI approach now that theme is properly configured
                 Log.d("TuyaSDK", "Attempting to start BizBundle device pairing UI")
-                
+
                 try {
                     // Start the device activator UI using ThingDeviceActivatorManager
                     ThingDeviceActivatorManager.startDeviceActiveAction(this)
                     Log.d("TuyaSDK", "BizBundle device pairing UI started successfully")
                     result.success("Device pairing UI started successfully")
                 } catch (uiException: Exception) {
-                    Log.e("TuyaSDK", "BizBundle UI failed, falling back to core scanning: ${uiException.message}")
-                    
+                    Log.e(
+                        "TuyaSDK",
+                        "BizBundle UI failed, falling back to core scanning: ${uiException.message}"
+                    )
+
                     // Fallback to core activator scanning if UI fails
                     Log.d("TuyaSDK", "Using core activator approach as fallback")
-                    
+
                     val scanBuilder = ThingActivatorScanBuilder()
 
-                    
-                    ThingActivatorCoreKit.getScanDeviceManager().startScan(scanBuilder, object : ThingActivatorScanCallback {
-                        override fun deviceFound(deviceBean: ThingActivatorScanDeviceBean) {
-                            Log.d("TuyaSDK", "Device found: ${deviceBean.name}")
-                        }
 
-                        override fun deviceRepeat(deviceBean: ThingActivatorScanDeviceBean) {
-                            Log.d("TuyaSDK", "Device repeat: ${deviceBean.name}")
-                        }
+                    ThingActivatorCoreKit.getScanDeviceManager()
+                        .startScan(scanBuilder, object : ThingActivatorScanCallback {
+                            override fun deviceFound(deviceBean: ThingActivatorScanDeviceBean) {
+                                Log.d("TuyaSDK", "Device found: ${deviceBean.name}")
+                            }
 
-                        override fun deviceUpdate(deviceBean: ThingActivatorScanDeviceBean) {
-                            Log.d("TuyaSDK", "Device update: ${deviceBean.name}")
-                        }
+                            override fun deviceRepeat(deviceBean: ThingActivatorScanDeviceBean) {
+                                Log.d("TuyaSDK", "Device repeat: ${deviceBean.name}")
+                            }
 
-                        override fun scanFailure(failureBean: ThingActivatorScanFailureBean) {
-                            Log.e("TuyaSDK", "Scan failed: ${failureBean.errorMsg}")
-                        }
+                            override fun deviceUpdate(deviceBean: ThingActivatorScanDeviceBean) {
+                                Log.d("TuyaSDK", "Device update: ${deviceBean.name}")
+                            }
 
-                        override fun scanFinish() {
-                            Log.d("TuyaSDK", "Scan finished")
-                        }
-                    })
-                    
+                            override fun scanFailure(failureBean: ThingActivatorScanFailureBean) {
+                                Log.e("TuyaSDK", "Scan failed: ${failureBean.errorMsg}")
+                            }
+
+                            override fun scanFinish() {
+                                Log.d("TuyaSDK", "Scan finished")
+                            }
+                        })
+
                     Log.d("TuyaSDK", "Core device scanning started as fallback")
                     result.success("Device scanning started as fallback")
                 }
@@ -346,7 +332,7 @@ class MainActivity : FlutterActivity() {
                 Log.e("TuyaSDK", "Failed to start device scanning: ${e.message}", e)
                 Log.e("TuyaSDK", "Exception type: ${e.javaClass.simpleName}")
                 Log.e("TuyaSDK", "Stack trace: ${e.stackTrace.joinToString("\n")}")
-                
+
                 result.error("SCAN_FAILED", "Failed to start device scanning: ${e.message}", null)
             }
 

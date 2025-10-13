@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tuya SDK Configuration -->
+    <string name="tuya_app_key">xxft3fqw93d375ucppkn</string>
+    <string name="tuya_app_secret">k8u9edtefgrwcmkqaesra9gmgmpuh8uy</string>
+</resources>
+

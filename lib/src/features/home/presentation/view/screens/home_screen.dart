@@ -112,16 +112,20 @@ class HomeScreen extends StatelessWidget {
                       crossAxisCount: context.isMobile ? 2 : context.isTablet ? 3 : 4,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 0.85,
+                      childAspectRatio: 0.75,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final device = state.devices[index];
+                        // Get home name from the selected home
+                        final selectedHome = state.homes.firstWhere(
+                          (home) => home.homeId == state.selectedHomeId,
+                          orElse: () => state.homes.first,
+                        );
                         return DeviceCard(
                           device: device,
-                          onTap: () {
-
-                          },
+                          homeId: state.selectedHomeId,
+                          homeName: selectedHome.name,
                         );
                       },
                       childCount: state.devices.length,

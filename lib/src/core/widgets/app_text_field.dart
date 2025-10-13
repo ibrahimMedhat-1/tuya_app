@@ -1,4 +1,5 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/material.dart';
+import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
 
 /// A reusable text field widget with customizable styling
 class AppTextField extends StatelessWidget {

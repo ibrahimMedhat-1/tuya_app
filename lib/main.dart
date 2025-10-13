@@ -1,8 +1,11 @@
- import 'package:tuya_app/src/core/utils/app_imports.dart';
-
-import 'src/features/auth/presentation/manager/cubit/auth_cubit.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter_bloc/flutter_bloc.dart';
+ import 'package:tuya_app/src/core/utils/di.dart';
+ import 'package:tuya_app/src/core/utils/routing.dart';
+ import 'package:tuya_app/src/features/auth/presentation/manager/cubit/auth_cubit.dart';
+ import 'package:tuya_app/src/features/auth/presentation/view/screens/login_screen.dart';
+ import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
  import 'src/features/home/presentation/view/screens/home_screen.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await getItInit();
