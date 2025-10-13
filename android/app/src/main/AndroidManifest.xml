@@ -18,9 +18,11 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
     <application
         android:label="Zero Code"
-        tools:replace="android:label"
+        tools:replace="android:label,android:theme"
         android:name=".TuyaSmartApplication"
-        android:icon="@mipmap/ic_launcher">
+        android:supportsRtl="false"
+        android:theme="@style/Base_BizBundle_Theme"
+         android:icon="@mipmap/ic_launcher">
         <meta-data
             android:name="TUYA_SMART_APPKEY"
             android:value="xxft3fqw93d375ucppkn" />

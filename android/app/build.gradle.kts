@@ -1,10 +1,7 @@
-import com.android.build.api.dsl.Packaging
-import org.jetbrains.kotlin.util.profile
-
 plugins {
+//    id("com.thingclips.open.theme")
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -23,34 +20,33 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.zerotechiot.eg"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a","x86","x86_64")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
-    fun Packaging.() {
+
+    packaging {
         jniLibs {
-            pickFirsts += setOf(
-                "lib/*/liblog.so",
-                "lib/*/libc++_shared.so",
-                "lib/*/libyuv.so",
-                "lib/*/libopenh264.so",
-                "lib/*/libv8wrapper.so",
-                "lib/*/libv8android.so"
-            )
+            pickFirsts += "lib/armeabi-v7a/liblog.so"
+            pickFirsts += "lib/arm64-v8a/liblog.so"
+            pickFirsts += "lib/x86/liblog.so"
+            pickFirsts += "lib/x86_64/liblog.so"
+            pickFirsts += "lib/*/libc++_shared.so"
+            pickFirsts += "lib/*/libyuv.so"
+            pickFirsts += "lib/*/libopenh264.so"
+            pickFirsts += "lib/*/libv8wrapper.so"
+            pickFirsts += "lib/*/libv8android.so"
         }
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("C:\\Users\\i.medhat\\StudioProjects\\tuya_app\\android\\app\\sha 256.jks")
+            storeFile = file("/Users/ibrahim/StudioProjects/tuya_app/android/app/sha 256.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"
@@ -78,12 +74,13 @@ android {
         mavenCentral()
         maven { url = uri("https://github.com/Kotlin/kotlinx.serialization/releases") }
         maven { url = uri("https://maven-other.tuya.com/repository/maven-releases/") }
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven-aliyun.com/repository/public") }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
-        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
-        maven { url = uri("https://maven-other.tuya.com/repository/maven-releases/") }
         maven { url = uri("https://maven-other.tuya.com/repository/maven-commercial-releases/") }
+        maven { url = uri("https://maven-other.tuya.com/repository/maven-snapshots/") }
         maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://central.maven.org/maven2/") }
+        maven { url = uri("https://developer.huawei.com/repo/") }
     }
 }
 
@@ -91,19 +88,63 @@ flutter {
     source = "../.."
 }
 
+configurations.all {
+    exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+    exclude(group = "commons-io", module = "commons-io")
+    resolutionStrategy {
+        force("com.squareup.okhttp3:okhttp:4.12.0")
+        force("commons-io:commons-io:2.11.0")
+    }
+}
+
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
-    implementation("com.alibaba:fastjson:2.0.58")
+    implementation("com.alibaba:fastjson:2.0.59")
+    
+    // Force specific versions to avoid conflicts
+    implementation("com.squareup.okhttp3:okhttp:5.2.0")
     implementation("com.squareup.okhttp3:okhttp-urlconnection:5.1.0")
+    implementation("commons-io:commons-io:2.20.0")
+
+    // Main Tuya SDK - use consistent version
     implementation("com.thingclips.smart:thingsmart:6.7.3") {
         exclude(module = "thingsmart-modularCampAnno")
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
     }
-    implementation("com.thingclips.smart:ThingSmartActivatorExtraBizBundle:5.0.0")
-    implementation("com.tuya.android.module:tymodule-config:latestVersion")
-    implementation("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.25")
-//    implementation("com.thingclips.android.module:thingmodule-annotation:1.5.0-SNAPSHOT")
-//    implementation("com.thingclips.smart:thingsmart-modularCampAnno:1.0.0-SNAPSHOT")
-//    implementation("com.thingclips.smart:thingsmart-device-detail-core-kit:6.7.0")
-//    implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0")
+
+    // Tuya expansion SDK
+    implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0") {
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
+    }
+
+    // Tuya BizBundle BOM for version management
+    api(enforcedPlatform("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.0"))
+    
+    // Device Control UI BizBundle - REQUIRED
+    implementation("com.thingclips.smart:thingsmart-bizbundle-panel")
+    
+    // Basic extension capabilities - REQUIRED
+    implementation("com.thingclips.smart:thingsmart-bizbundle-basekit")
+    
+    // Business extension capabilities - REQUIRED
+    implementation("com.thingclips.smart:thingsmart-bizbundle-bizkit")
+    
+    // Device control capabilities - REQUIRED
+    implementation("com.thingclips.smart:thingsmart-bizbundle-devicekit")
+    
+    // Device Activator BizBundle
+    implementation("com.thingclips.smart:thingsmart-bizbundle-device_activator:6.7.0") {
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
+    }
+
+    // Tuya theme SDK - required for BizBundle UI
+    implementation("com.thingclips.smart:thingsmart-theme-open:2.0.6")
+
+    // Android dependencies
     implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("com.google.android.material:material:1.13.0")
 }
