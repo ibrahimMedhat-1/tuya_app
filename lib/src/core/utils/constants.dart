@@ -1,4 +1,4 @@
-import 'app_imports.dart';
+import 'package:flutter/services.dart';
 
 abstract class AppConstants{
   static const MethodChannel channel = MethodChannel(

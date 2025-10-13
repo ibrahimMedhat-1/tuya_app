@@ -1,8 +1,10 @@
 
 import 'package:tuya_app/src/core/error/failures.dart';
 import 'package:tuya_app/src/core/utils/either.dart';
+import 'package:tuya_app/src/features/auth/data/datasources/tuya_auth_data_source.dart';
 
-import '../../../../core/utils/app_imports.dart';
+import '../../domain/entities/user.dart';
+import 'auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final TuyaAuthDataSource _dataSource;

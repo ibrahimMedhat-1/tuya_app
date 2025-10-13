@@ -1,9 +1,7 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+ import 'package:tuya_app/src/core/utils/app_imports.dart';
 
 import 'src/features/auth/presentation/manager/cubit/auth_cubit.dart';
-import 'src/features/home/presentation/manager/home_cubit.dart';
-import 'src/features/home/presentation/view/screens/home_screen.dart';
+ import 'src/features/home/presentation/view/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

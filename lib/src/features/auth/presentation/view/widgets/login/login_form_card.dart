@@ -1,4 +1,9 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/material.dart';
+import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
+import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
+import 'package:tuya_app/src/core/widgets/app_button.dart';
+import 'package:tuya_app/src/core/widgets/app_card.dart';
+import 'package:tuya_app/src/core/widgets/app_text_field.dart';
 
 class LoginFormCard extends StatefulWidget {
   final Future<void> Function(String email,String password)? onLoginPressed; // Changed to allow async

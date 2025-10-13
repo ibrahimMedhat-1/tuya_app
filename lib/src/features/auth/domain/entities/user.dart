@@ -1,4 +1,4 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'user.g.dart';
 

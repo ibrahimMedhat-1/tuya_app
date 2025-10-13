@@ -1,6 +1,10 @@
-import '../../../../../core/utils/app_imports.dart';
-import '../../../../home/domain/entities/home.dart';
-import '../widgets/device_card.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+ import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
+import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
+import 'package:tuya_app/src/features/home/domain/entities/home.dart';
+import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
+ import 'package:tuya_app/src/features/home/presentation/view/widgets/device_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -116,12 +120,7 @@ class HomeScreen extends StatelessWidget {
                         return DeviceCard(
                           device: device,
                           onTap: () {
-                            final dps = Map<String, Object>.from(device.dps);
-                            final currentStatus = dps['1'] as bool? ?? false;
-                            context.read<HomeCubit>().controlDevice(
-                                  deviceId: device.id,
-                                  dps: {'1': !currentStatus},
-                                );
+
                           },
                         );
                       },

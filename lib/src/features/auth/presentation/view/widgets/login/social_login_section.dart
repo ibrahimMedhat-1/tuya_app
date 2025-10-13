@@ -1,4 +1,7 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/material.dart';
+import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
+import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
+import 'package:tuya_app/src/core/widgets/app_button.dart';
 
 class SocialLoginSection extends StatelessWidget {
   final VoidCallback? onGoogleLogin;

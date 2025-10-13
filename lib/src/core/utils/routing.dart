@@ -1,8 +1,6 @@
-// Route Constants
 import 'package:flutter/material.dart';
+import 'package:tuya_app/src/features/auth/presentation/view/screens/login_screen.dart';
 import 'package:tuya_app/src/features/home/presentation/view/screens/home_screen.dart';
-
-import 'app_imports.dart' show LoginScreen;
 
 abstract class Routes {
   static const String homeRoute = 'home';

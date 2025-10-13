@@ -1,4 +1,4 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/material.dart';
 
 /// A reusable card widget with customizable styling
 class AppCard extends StatelessWidget {

@@ -1,4 +1,6 @@
- import 'package:tuya_app/src/core/utils/app_imports.dart';
+ import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tuya_app/src/features/auth/domain/entities/user.dart';
+import 'package:tuya_app/src/features/auth/domain/usecases/auth_usecase.dart';
 
 part 'auth_state.dart';
 
