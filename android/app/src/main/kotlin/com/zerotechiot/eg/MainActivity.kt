@@ -10,14 +10,10 @@ import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.android.user.api.IRegisterCallback
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.android.user.bean.User
-// Device activation imports - Using BizBundle for now
-// import com.thingclips.smart.sdk.api.IThingActivatorGetToken
-// import com.thingclips.smart.sdk.api.IThingSmartActivatorListener
-// import com.thingclips.smart.sdk.bean.DeviceBean
-// import com.thingclips.smart.activator.ThingActivatorBuilder
-// import com.thingclips.smart.activator.model.ThingActivatorMode
-// BizBundle import - class name needs verification
-// import com.thingclips.smart.activator.mesosphere.ThingDeviceActivatorManager
+import com.thingclips.smart.panelcaller.api.AbsPanelCallerService
+import com.thingclips.smart.api.MicroContext
+import com.thingclips.smart.device.activator.ThingDeviceActivatorManager
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -111,6 +107,35 @@ class MainActivity : FlutterActivity() {
                     } else {
                         result.error("INVALID_ARGUMENTS", "Device ID is required", null)
                     }
+                }
+
+                "openDeviceControlPanel" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val homeName = call.argument<String>("homeName")
+                    val deviceId = call.argument<String>("deviceId")
+                    if (deviceId != null) {
+                        Log.d("TuyaSDK", "openDeviceControlPanel called with deviceId: $deviceId, homeId: $homeId, homeName: $homeName")
+                        openDeviceControlPanel(deviceId, homeId?.toLong() ?: 0, homeName ?: "", result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "deviceId is required", null)
+                    }
+                }
+
+                "getHomes" -> {
+                    getHomes(result)
+                }
+
+                "getHomeDevices" -> {
+                    val homeId = call.argument<Long>("homeId")
+                    if (homeId != null) {
+                        getHomeDevices(homeId, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId is required", null)
+                    }
+                }
+
+                "pairDevices" -> {
+                    pairDevices(result)
                 }
 
                 // Temporarily disabled - needs correct BizBundle class path
@@ -389,6 +414,155 @@ class MainActivity : FlutterActivity() {
             }
         }
         return true
+    }
+
+    /**
+     * Get user's homes
+     */
+    private fun getHomes(result: MethodChannel.Result) {
+        try {
+            val user = ThingHomeSdk.getUserInstance().user
+            if (user == null) {
+                result.error("NOT_LOGGED_IN", "User must be logged in", null)
+                return
+            }
+
+            ThingHomeSdk.getHomeManagerInstance().getHomeList(object : com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback {
+                override fun onSuccess(homeBeans: List<com.thingclips.smart.home.sdk.bean.HomeBean>) {
+                    val homes = homeBeans.map { home ->
+                        mapOf(
+                            "homeId" to home.homeId,
+                            "name" to home.name,
+                            "geoName" to home.geoName,
+                            "admin" to home.admin,
+                            "city" to home.city,
+                            "lat" to home.lat,
+                            "lon" to home.lon
+                        )
+                    }
+                    result.success(homes)
+                }
+
+                override fun onError(errorCode: String?, errorMsg: String?) {
+                    result.error("GET_HOMES_ERROR", "Failed to get homes: $errorMsg", null)
+                }
+            })
+        } catch (e: Exception) {
+            result.error("GET_HOMES_ERROR", "Failed to get homes: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Get devices for a specific home
+     */
+    private fun getHomeDevices(homeId: Long, result: MethodChannel.Result) {
+        try {
+            val user = ThingHomeSdk.getUserInstance().user
+            if (user == null) {
+                result.error("NOT_LOGGED_IN", "User must be logged in", null)
+                return
+            }
+
+            ThingHomeSdk.newHomeInstance(homeId).getHomeDetail(object : com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback {
+                override fun onSuccess(homeBean: com.thingclips.smart.home.sdk.bean.HomeBean) {
+                    val devices = homeBean.deviceList?.map { device ->
+                        mapOf(
+                            "deviceId" to (device.devId ?: ""),
+                            "name" to (device.name ?: device.devId ?: "Unknown Device"),
+                            "isOnline" to device.isOnline,
+                            "image" to (device.iconUrl ?: "")
+                        )
+                    } ?: emptyList()
+                    result.success(devices)
+                }
+
+                override fun onError(errorCode: String?, errorMsg: String?) {
+                    result.error("GET_DEVICES_ERROR", "Failed to get devices: $errorMsg", null)
+                }
+            })
+        } catch (e: Exception) {
+            result.error("GET_DEVICES_ERROR", "Failed to get devices: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Open device control panel using BizBundle
+     */
+    private fun openDeviceControlPanel(deviceId: String, homeId: Long, homeName: String, result: MethodChannel.Result) {
+        try {
+            Log.d("TuyaSDK", "Opening device control panel for device: $deviceId, homeId: $homeId, homeName: $homeName")
+            
+            val user = ThingHomeSdk.getUserInstance().user
+            if (user == null) {
+                result.error("NOT_LOGGED_IN", "User must be logged in", null)
+                return
+            }
+
+            // Use BizBundle to open device control panel
+            val microContext = MicroContext.getMicroContext(this)
+            val panelCallerService = microContext.findServiceByInterface(AbsPanelCallerService::class.java)
+            
+            if (panelCallerService != null) {
+                panelCallerService.goPanelWithCheckAndTip(this, deviceId, homeId, homeName, object : com.thingclips.smart.panelcaller.api.IPanelCallerCallback {
+                    override fun onSuccess() {
+                        Log.d("TuyaSDK", "Device control panel opened successfully")
+                        result.success(mapOf("success" to true, "message" to "Device control panel opened"))
+                    }
+
+                    override fun onError(errorCode: String?, errorMsg: String?) {
+                        Log.e("TuyaSDK", "Failed to open device control panel: $errorMsg")
+                        result.error("OPEN_PANEL_FAILED", "Failed to open device control panel: $errorMsg", null)
+                    }
+                })
+            } else {
+                Log.e("TuyaSDK", "PanelCallerService not found")
+                result.error("SERVICE_NOT_FOUND", "PanelCallerService not available", null)
+            }
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Failed to open device control panel", e)
+            result.error("OPEN_PANEL_FAILED", "Failed to open device control panel: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Start device pairing using BizBundle
+     */
+    private fun pairDevices(result: MethodChannel.Result) {
+        try {
+            val user = ThingHomeSdk.getUserInstance().user
+            if (user == null) {
+                result.error("NOT_LOGGED_IN", "User must be logged in", null)
+                return
+            }
+
+            // Check permissions first
+            if (!checkPermissions()) {
+                requestPermissions()
+                result.error("PERMISSIONS_REQUIRED", "Location and Bluetooth permissions are required", null)
+                return
+            }
+
+            // Use BizBundle device activator
+            ThingDeviceActivatorManager.startDeviceActiveAction(this)
+            result.success(mapOf("success" to true, "message" to "Device pairing started"))
+        } catch (e: Exception) {
+            result.error("PAIRING_ERROR", "Failed to start device pairing: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Request required permissions
+     */
+    private fun requestPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.CHANGE_WIFI_STATE,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN
+        )
+        ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE)
     }
 
     override fun onDestroy() {

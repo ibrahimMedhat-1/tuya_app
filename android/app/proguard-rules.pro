@@ -24,3 +24,13 @@
 # MINI SDK
 -keep class com.gzl.smart.** { *; }
 -dontwarn com.gzl.smart.**
+
+# Additional dontwarn rules for build issues
+-dontwarn com.alibaba.fastjson2.support.**
+-dontwarn com.google.android.play.core.**
+-dontwarn com.huawei.**
+-dontwarn com.google.j2objc.annotations.**
+-dontwarn com.aliyun.odps.**
+-dontwarn java.awt.**
+-dontwarn org.redisson.**
+-dontwarn retrofit2.**

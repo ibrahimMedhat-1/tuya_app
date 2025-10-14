@@ -36,7 +36,7 @@ android {
     }
     packagingOptions {
         jniLibs {
-            pickFirsts += setOf("lib/*/liblog.so", "lib/*/libc++_shared.so", "lib/*/libyuv.so", "lib/*/libopenh264.so", "lib/*/libv8wrapper.so", "lib/*/libv8android.so")
+            pickFirsts += setOf("lib/*/liblog.so", "lib/*/libc++_shared.so", "lib/*/libyuv.so", "lib/*/libopenh264.so", "lib/*/libv8wrapper.so", "lib/*/libv8android.so", "lib/*/libsqlcipher.so")
         }
     }
 
