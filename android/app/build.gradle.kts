@@ -1,9 +1,7 @@
-import org.jetbrains.kotlin.util.profile
-
 plugins {
+//    id("com.thingclips.open.theme")
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -22,21 +20,38 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.zerotechiot.eg"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a","x86","x86_64")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
+        
+        // Support for 16KB page size (required for Google Play and Android 15+)
+        // This ensures the app works on devices with 16KB page size
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+            }
         }
     }
-    packagingOptions {
+
+    packaging {
         jniLibs {
-            pickFirsts += setOf("lib/*/liblog.so", "lib/*/libc++_shared.so", "lib/*/libyuv.so", "lib/*/libopenh264.so", "lib/*/libv8wrapper.so", "lib/*/libv8android.so", "lib/*/libsqlcipher.so")
+            pickFirsts += "lib/armeabi-v7a/liblog.so"
+            pickFirsts += "lib/arm64-v8a/liblog.so"
+            pickFirsts += "lib/x86/liblog.so"
+            pickFirsts += "lib/x86_64/liblog.so"
+            pickFirsts += "lib/*/libc++_shared.so"
+            pickFirsts += "lib/*/libyuv.so"
+            pickFirsts += "lib/*/libopenh264.so"
+            pickFirsts += "lib/*/libv8wrapper.so"
+            pickFirsts += "lib/*/libv8android.so"
+            // Fix SQLCipher library conflicts
+            pickFirsts += "lib/*/libsqlcipher.so"
+            pickFirsts += "lib/*/libwcdb.so"
         }
     }
 
@@ -65,36 +80,96 @@ android {
         }
     }
 
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://github.com/Kotlin/kotlinx.serialization/releases") }
+        maven { url = uri("https://maven-other.tuya.com/repository/maven-releases/") }
+        maven { url = uri("https://maven-aliyun.com/repository/public") }
+        maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
+        maven { url = uri("https://maven-other.tuya.com/repository/maven-commercial-releases/") }
+        maven { url = uri("https://maven-other.tuya.com/repository/maven-snapshots/") }
+        maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://central.maven.org/maven2/") }
+        maven { url = uri("https://developer.huawei.com/repo/") }
+    }
 }
 
 flutter {
     source = "../.."
 }
 
+configurations.all {
+    exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+    exclude(group = "commons-io", module = "commons-io")
+    resolutionStrategy {
+        force("com.squareup.okhttp3:okhttp:4.12.0")
+        force("commons-io:commons-io:2.11.0")
+    }
+}
+
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
-    implementation("com.alibaba:fastjson:2.0.58")
-    implementation("com.squareup.okhttp3:okhttp-urlconnection:5.1.0")
+    implementation("com.alibaba:fastjson:2.0.59")
     
-    // Core Tuya SDK - Matching stable app version (6.2.1) with BizBundle BOM
-    implementation(platform("com.thingclips.smart:thingsmart-BizBundlesBom:6.2.8"))
-    implementation("com.thingclips.smart:thingsmart:6.2.1")
-    
-    // BizBundle UI components for complete smart home experience
-    implementation("com.thingclips.smart:thingsmart-bizbundle-device_activator")
-    implementation("com.thingclips.smart:thingsmart-bizbundle-qrcode_mlkit")
-    implementation("com.thingclips.smart:thingsmart-bizbundle-panelmore")
-    implementation("com.thingclips.smart:thingsmart-bizbundle-ota")
-    
-    // Fresco for image loading (required by BizBundle)
-    implementation("com.facebook.fresco:fresco:3.1.3")
-    implementation("com.facebook.fresco:animated-gif:3.1.3")
+    // Force specific versions to avoid conflicts
+    implementation("com.squareup.okhttp3:okhttp:5.2.0")
+    implementation("com.squareup.okhttp3:okhttp-urlconnection:5.2.1")
+    implementation("commons-io:commons-io:2.20.0")
 
+    // Main Tuya SDK - use consistent version
+    implementation("com.thingclips.smart:thingsmart:6.7.3") {
+        exclude(module = "thingsmart-modularCampAnno")
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
+    }
+
+    // Tuya expansion SDK
+    implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0") {
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
+    }
+
+    // Tuya BizBundle BOM for version management - MUST use platform()
+    implementation(platform("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.25"))
+    
+    // Device Control UI BizBundle - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-panel") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
+    
+    // Basic extension capabilities - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-basekit") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
+    
+    // Business extension capabilities - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-bizkit") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
+    
+    // Device control capabilities - REQUIRED (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-devicekit") {
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
+    
+    // Device Activator BizBundle (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-device_activator") {
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
+        exclude(group = "net.zetetic", module = "android-database-sqlcipher")
+        exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+    }
+
+    // Tuya theme SDK - required for BizBundle UI
+    implementation("com.thingclips.smart:thingsmart-theme-open:2.0.6")
+
+    // Android dependencies
     implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.multidex:multidex:2.0.1")
+    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("com.google.android.material:material:1.13.0")
 }
