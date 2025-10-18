@@ -57,7 +57,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("C:/ZeroTech Github demo/tuya-ui-bizbundle-android-demo/sha 256.jks")
+            storeFile = file("/Users/rebuy/Downloads/sha256.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"

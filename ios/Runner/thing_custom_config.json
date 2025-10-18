@@ -1,0 +1,13 @@
+{
+    "config": {
+        "appId": 123,
+        "thingAppKey": "m7q5wupkcc55e4wamdxr",
+        "appScheme": "zerotechioteg",
+        "hotspotPrefixs": ["SmartLife"],
+        "needBle": true
+    },
+    "colors": {
+        "themeColor": "#FF5A28"
+    }
+}
+

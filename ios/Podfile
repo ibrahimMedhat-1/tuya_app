@@ -1,9 +1,11 @@
+# Exact copy from working sample with Flutter integration
 source 'https://github.com/CocoaPods/Specs.git'
-source 'https://github.com/TuyaInc/TuyaPublicSpecs.git'
-
 source 'https://github.com/tuya/tuya-pod-specs.git'
 
-platform :ios, '15.6'
+platform :ios, '13.0'
+
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -27,73 +29,48 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
- target 'Runner' do
- use_frameworks!
+target 'Runner' do
+  use_frameworks!
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  # Exact from working sample
+  pod 'ThingSmartCryption', :path => './ios_core_sdk'
+  pod 'ThingSmartHomeKit', '~> 6.7.0'
+  pod 'ThingSmartBusinessExtensionKit', '~> 6.7.0'
+  pod 'ThingSmartActivatorBizBundle'
+  pod 'ThingSmartPanelBizBundle'
+  pod 'ThingSmartBusinessExtensionKitBLEExtra','~> 6.7.0'
+  
   target 'RunnerTests' do
     inherit! :search_paths
   end
-      pod "ThingSmartBusinessExtensionKit",'~> 6.7.0'
-
-  pod 'ThingSmartSweeperKit','~> 6.7.0'
-  pod 'ThingSmartDeviceDetailBizBundle','~> 6.7.0'
-  pod 'ThingSmartSkillQuickBindBizBundle','~> 6.7.0'
-  pod 'ThingSmartHelpCenterBizBundle','~> 6.7.0'
-  pod 'ThingSmartActivatorBizBundle','~> 6.7.0'
-  pod 'ThingSmartMessageBizBundle','~> 6.7.0'
-  pod 'ThingSmartSceneBizBundle','~> 6.7.0'
-  pod 'ThingSmartMallBizBundle','~> 6.7.0'
-  pod 'ThingAdvancedFunctionsBizBundle','~> 6.7.0'
-  pod 'ThingSmartMarketingBizBundle','~> 6.7.0'
-  pod 'ThingSmartGroupHandleBizBundle','~> 6.7.0'
-  pod 'ThingSmartOutdoorKit','~> 6.7.0'
-  pod 'ThingSmartDeviceSyncBizBundle','~> 6.7.0'
-  pod 'ThingSmartShareBizBundle','~> 6.7.0'
-  pod 'ThingSmartCameraRNPanelBizBundle','~> 6.7.0'
-  pod 'ThingSmartLockKit','~> 6.7.0'
-  pod 'ThingSmartCameraPanelBizBundle','~> 6.7.0'
-  pod 'ThingSmartCameraKit','~> 6.7.0'
-  pod 'ThingSmartLangsExtraBizBundle','~> 6.7.0'
-  pod 'ThingSmartFamilyBizBundle','~> 6.7.0'
-  pod 'ThingSmartBusinessExtensionKit','~> 6.7.0'
-  pod 'ThingSmartOTABizBundle','~> 6.7.0'
-  pod 'ThingSmartCameraSettingBizBundle','~> 6.7.0'
-  pod 'ThingSmartCloudServiceBizBundle','~> 6.7.0'
-  pod 'ThingSmartActivatorExtraBizBundle','~> 6.7.0'
-  pod 'ThingSmartThemeManagerBizBundle','~> 6.7.0'
-
-  pod 'ThingSmartPanelBizBundle','~> 6.7.0' # open cv here
-   pod 'ThingSmartCryption', :path => './ios_core_sdk'
-
-
 end
 
-# post_install do |installer|
-#   installer.pods_project.targets.each do |target|
-#     flutter_additional_ios_build_settings(target)
-#
-#     target.build_configurations.each do |config|
-#       # Fix for architecture issues
-#       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '11.0'
-#
-#       # For Apple Silicon Macs
-#       if config.name == 'Debug'
-#         config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
-#       end
-#
-#       # Architecture settings
-#       config.build_settings['ARCHS'] = 'arm64'
-#
-#       # Exclude arm64 for simulator if on Intel Mac (uncomment if needed)
-#       # config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
-#     end
-#   end
-# end
-
 post_install do |installer|
+  # From working sample
+  `cd Runner; [[ -f AppKey.swift ]] || cp ../ios_backup_old/Runner/AppKey.swift AppKey.swift;`
+  
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    
+    target.build_configurations.each do |config|
+      config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
+      config.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = "13.0"
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      # Tuya SDK only supports x86_64 simulators (Rosetta), not arm64
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+    end
+  end
+  
+  # Also configure the Runner target
+  installer.generated_projects.each do |project|
+    project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      end
+    end
   end
 end

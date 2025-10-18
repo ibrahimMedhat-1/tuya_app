@@ -236,21 +236,59 @@ class DeviceCard extends StatelessWidget {
   }
 
   void _handleCardTap() {
-
+      print('');
+      print('═══════════════════════════════════════════════════════════');
+      print('🔵 [Flutter] Device card TAPPED!');
+      print('   Device ID: ${device.deviceId}');
+      print('   Device Name: ${device.name}');
+      print('   Home ID: $homeId');
+      print('   Home Name: ${homeName ?? 'Home'}');
+      print('   Channel: ${_channel.name}');
+      print('═══════════════════════════════════════════════════════════');
+      print('');
       _openDeviceControlPanel();
-
   }
 
   Future<void> _openDeviceControlPanel() async {
     try {
-      await _channel.invokeMethod('openDeviceControlPanel', {
+      print('🚀 [Flutter] Calling iOS method: openDeviceControlPanel');
+      print('   Arguments:');
+      print('     - deviceId: ${device.deviceId}');
+      print('     - homeId: $homeId');
+      print('     - homeName: ${homeName ?? 'Home'}');
+      
+      final result = await _channel.invokeMethod('openDeviceControlPanel', {
         'deviceId': device.deviceId,
         'homeId': homeId,
         'homeName': homeName ?? 'Home',
       });
+      
+      print('✅ [Flutter] iOS method call completed successfully!');
+      print('   Result from iOS: $result');
     } on PlatformException catch (e) {
-      debugPrint("Failed to open device control panel: '${e.message}'.");
-      // You can show a snackbar or dialog here to inform the user
+      print('');
+      print('❌❌❌ [Flutter] PlatformException ❌❌❌');
+      print("   Message: '${e.message}'");
+      print("   Code: ${e.code}");
+      print("   Details: ${e.details}");
+      debugPrint("   Stack trace: ${e.stacktrace}");
+      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
+      print('');
+    } on MissingPluginException catch (e) {
+      print('');
+      print('❌❌❌ [Flutter] MissingPluginException ❌❌❌');
+      print('   MethodChannel handler NOT registered on iOS!');
+      print('   This means iOS is not listening to this channel.');
+      print('   Exception: $e');
+      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
+      print('');
+    } catch (e) {
+      print('');
+      print('❌❌❌ [Flutter] Unexpected Error ❌❌❌');
+      print('   Error: $e');
+      print('   Type: ${e.runtimeType}');
+      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
+      print('');
     }
   }
 }

@@ -2,12 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Zero Code</string>
+	<string>Tuya App</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Zero Code</string>
+	<string>tuya_app</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -25,8 +23,6 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -45,9 +41,62 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>tyAppKey</key>
-	<string>xxft3fqw93d375ucppkn</string>
-	<key>tyAppSecret</key>
-	<string>k8u9edtefgrwcmkqaesra9gmgmpuh8uy</string>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	
+	<!-- Location permissions for Wi-Fi pairing -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need location access to retrieve Wi-Fi network information for device pairing</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We need location access to retrieve Wi-Fi network information for device pairing</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need location access to retrieve Wi-Fi network information for device pairing</string>
+	
+	<!-- Camera permission for QR code scanning -->
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to scan QR codes for device pairing</string>
+	
+	<!-- Photo library for device panels -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access for device panels</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save photos from device panels</string>
+	
+	<!-- Microphone for camera devices -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access for video communication with camera devices</string>
+	
+	<!-- Bluetooth permissions (if supporting BLE devices) -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>We need Bluetooth access to pair and control Bluetooth devices</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>We need Bluetooth access to pair and control Bluetooth devices</string>
+	
+	<!-- Local Network for device discovery -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>We need local network access to discover and control smart devices</string>
+	
+	<!-- Bonjour services for device discovery -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_tuya._tcp</string>
+	</array>
+	
+	<!-- URL Scheme for Tuya SDK -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.zerotechiot.eg</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>zerotechioteg</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
