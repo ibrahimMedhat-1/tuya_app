@@ -1,5 +1,10 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:tuya_app/src/core/error/failures.dart';
+import 'package:tuya_app/src/core/utils/either.dart';
+
+import '../../domain/entities/user.dart';
 
 abstract class AuthRepository {
-  Future<User> login(String email, String password);
+  Future<Either<Failure, User>> login(String email, String password);
+  Future<Either<Failure, User?>> isLoggedIn();
+  Future<Either<Failure, void>> logout();
 }

@@ -95,10 +95,9 @@ class MainActivity : FlutterActivity() {
 
                 "openDeviceControlPanel" -> {
                     val homeId = call.argument<Int>("homeId")
-                    val homeName = call.argument<String>("homeName")
+                    val homeName = call.argument<String>("deviceId")
                     val deviceId = call.argument<String>("deviceId")
                     if (deviceId != null) {
-                        Log.d("TuyaSDK", "openDeviceControlPanel called with deviceId: $deviceId, homeId: $homeId, homeName: $homeName")
                         openDeviceControlPanel(deviceId, homeId?.toLong() ?: 0, homeName ?: "", result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "deviceId is required", null)
@@ -157,9 +156,9 @@ class MainActivity : FlutterActivity() {
                 val devices = homeBean?.deviceList?.map { device ->
                     mapOf(
                         "deviceId" to (device.devId ?: ""),
-                        "name" to (device.name ?: device.devId ?: "Unknown Device"),
+                        "name" to (device.name ?: "no name"),
                         "isOnline" to device.isOnline,
-                        "image" to (device.iconUrl ?: "")
+                        "image" to device.iconUrl
                     )
                 } ?: emptyList()
 
@@ -191,41 +190,30 @@ class MainActivity : FlutterActivity() {
 
     private fun openDeviceControlPanel(deviceId: String, homeId: Long, homeName: String, result: MethodChannel.Result) {
         try {
-            Log.d("TuyaSDK", "Opening device control panel for device: $deviceId, homeId: $homeId, homeName: $homeName")
-            
+            Log.d(
+                "TuyaSDK",
+                "Opening device control panel for device: $deviceId using Tuya BizBundle"
+            )
             try {
-                Log.d("TuyaSDK", "Clearing cache...")
                 val cacheService = MicroContext.getServiceManager()
                     .findServiceByInterface(ClearCacheService::class.java.name) as? ClearCacheService
                 cacheService?.clearCache(this)
-                
-                Log.d("TuyaSDK", "Shifting to family: $homeId - $homeName")
+                // 1. Initialize home service first
                 val familyService = MicroContext.getServiceManager()
                     .findServiceByInterface(AbsBizBundleFamilyService::class.java.name) as? AbsBizBundleFamilyService
-                
-                if (familyService != null) {
-                    familyService.shiftCurrentFamily(homeId, homeName)
-                    Log.d("TuyaSDK", "Family shifted successfully")
-                } else {
-                    Log.w("TuyaSDK", "AbsBizBundleFamilyService not found")
-                }
+                familyService?.shiftCurrentFamily(homeId, homeName)
 
-                Log.d("TuyaSDK", "Getting AbsPanelCallerService...")
+                // 2. Then open panel
                 val service = MicroContext.getServiceManager()
                     .findServiceByInterface(AbsPanelCallerService::class.java.name) as? AbsPanelCallerService
-                
-                if (service != null) {
-                    Log.d("TuyaSDK", "Opening device panel with goPanelWithCheckAndTip...")
-                    service.goPanelWithCheckAndTip(this, deviceId)
-                    Log.d("TuyaSDK", "Device panel opened successfully")
-                    result.success("Device control panel opened successfully")
-                } else {
-                    Log.e("TuyaSDK", "AbsPanelCallerService not found")
-                    result.error("SERVICE_NOT_FOUND", "Device control service not available", null)
-                }
+                service?.goPanelWithCheckAndTip(this, deviceId)
 
             } catch (bizBundleException: Exception) {
-                Log.e("TuyaSDK", "BizBundle control panel failed", bizBundleException)
+                Log.e(
+                    "TuyaSDK",
+                    "BizBundle control panel failed: ${bizBundleException.message}",
+                    bizBundleException
+                )
                 result.error(
                     "BIZBUNDLE_FAILED",
                     "Failed to open device control panel: ${bizBundleException.message}",
@@ -233,8 +221,9 @@ class MainActivity : FlutterActivity() {
                 )
             }
 
+
         } catch (e: Exception) {
-            Log.e("TuyaSDK", "Failed to open device control panel", e)
+            Log.e("TuyaSDK", "Failed to open device control panel: ${e.message}", e)
             result.error(
                 "OPEN_PANEL_FAILED",
                 "Failed to open device control panel: ${e.message}",

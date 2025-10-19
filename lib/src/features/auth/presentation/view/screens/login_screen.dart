@@ -45,12 +45,7 @@ class LoginScreen extends StatelessWidget {
                         constraints: BoxConstraints(maxWidth: context.responsiveMaxWidth),
                         child: LoginFormCard(
                           onLoginPressed: (email, password) async {
-                            await sl<AuthCubit>().login(context, email, password).then((onValue) {
-                              context.pushReplacementNamed(Routes.homeRoute);
-                            }).catchError((onError) {
-                              showDialog(context: context, builder: (context) => Dialog(child: Text('error :$onError '),),);
-
-                            });
+                            context.read<AuthCubit>().login(email, password);
                           },
                         ),
                       ),

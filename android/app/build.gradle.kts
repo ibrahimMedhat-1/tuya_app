@@ -165,6 +165,12 @@ dependencies {
         exclude(group = "com.tencent.wcdb", module = "wcdb-android")
     }
 
+    // BizBundle Initializer - CRITICAL for BizBundle to work (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-initializer") {
+        exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
+        exclude(group = "commons-io", module = "commons-io")
+    }
+
     // Tuya theme SDK - required for BizBundle UI
     implementation("com.thingclips.smart:thingsmart-theme-open:2.0.6")
 

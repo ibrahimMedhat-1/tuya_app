@@ -23,7 +23,7 @@ Future<void> getItInit() async {
   sl.registerLazySingleton<AuthUseCase>(
     () => AuthUseCase(sl<AuthRepository>()),
   );
-  sl.registerLazySingleton<AuthCubit>(() => AuthCubit());
+  sl.registerFactory<AuthCubit>(() => AuthCubit(sl<AuthUseCase>()));
 
   // Home dependencies
   sl.registerLazySingleton<TuyaHomeDataSource>(() => TuyaHomeDataSource());

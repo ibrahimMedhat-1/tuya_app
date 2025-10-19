@@ -1,22 +1,44 @@
- import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tuya_app/src/features/auth/domain/entities/user.dart';
+import 'package:tuya_app/src/features/auth/domain/usecases/auth_usecase.dart';
 
 part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthCubitState> {
-  AuthCubit() : super(AuthCubitInitial());
-  AuthUseCase authUseCase = sl<AuthUseCase>();
+  final AuthUseCase _authUseCase;
 
-  Future<User> login(BuildContext context, String email,String  password) async {
-    try {
-      final User user = await authUseCase.login(email, password);
-      return user;
-    } catch (e) {
-      throw Exception('Login failed: ${e.toString()}');
-    }
+  AuthCubit(this._authUseCase) : super(AuthCubitInitial());
+
+  Future<void> login(String email, String password) async {
+    emit(AuthCubitLoading());
+    final result = await _authUseCase.login(email, password);
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (user) => emit(AuthCubitAuthenticated(user)),
+    );
+  }
+
+  Future<void> checkLoginStatus() async {
+    emit(AuthCubitLoading());
+    final result = await _authUseCase.isLoggedIn();
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (user) {
+        if (user != null) {
+          emit(AuthCubitAuthenticated(user));
+        } else {
+          emit(AuthCubitUnauthenticated());
+        }
+      },
+    );
   }
 
   Future<void> logout() async {
-    // TODO: Implement actual logout logic when needed
-    emit(AuthCubitInitial());
+    emit(AuthCubitLoading());
+    final result = await _authUseCase.logout();
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (_) => emit(AuthCubitUnauthenticated()),
+    );
   }
 }

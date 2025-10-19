@@ -1,33 +1,55 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/services.dart';
+import 'package:tuya_app/src/core/error/failures.dart';
 import 'package:tuya_app/src/core/utils/constants.dart';
+import 'package:tuya_app/src/core/utils/either.dart';
+import 'package:tuya_app/src/features/auth/domain/entities/user.dart';
 
 class TuyaAuthDataSource {
   User? _currentUser;
-  Future<User> login(String email, String password) async {
+
+  Future<Either<Failure, User>> login(String email, String password) async {
     try {
       final result = await AppConstants.channel.invokeMethod('login', {
         'email': email,
         'password': password,
       });
-        _currentUser = User.fromJson(result);
-        return _currentUser!;
+      _currentUser = User.fromJson(result);
+      return Right(_currentUser!);
     } on PlatformException catch (e) {
-      throw _handlePlatformException(e);
+      return Left(_handlePlatformException(e));
     } catch (e) {
-      throw Exception('Login failed: ${e.toString()}');
+      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
     }
   }
 
-  Exception _handlePlatformException(PlatformException e) {
-    switch (e.code) {
-      case 'LOGIN_FAILED':
-        return Exception('Login failed: ${e.message}');
-      case 'RESET_PASSWORD_FAILED':
-        return Exception('Reset password failed: ${e.message}');
-      case 'INVALID_ARGUMENTS':
-        return Exception('Invalid arguments: ${e.message}');
-      default:
-        return Exception('Platform error: ${e.message}');
+  Future<Either<Failure, User?>> isLoggedIn() async {
+    try {
+      final result = await AppConstants.channel.invokeMethod('isLoggedIn');
+      if (result != null) {
+        _currentUser = User.fromJson(result);
+        return Right(_currentUser);
+      }
+      return const Right(null);
+    } on PlatformException catch (e) {
+      return Left(_handlePlatformException(e));
+    } catch (e) {
+      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
     }
+  }
+
+  Future<Either<Failure, void>> logout() async {
+    try {
+      await AppConstants.channel.invokeMethod('logout');
+      _currentUser = null;
+      return const Right(null);
+    } on PlatformException catch (e) {
+      return Left(_handlePlatformException(e));
+    } catch (e) {
+      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
+  Failure _handlePlatformException(PlatformException e) {
+    return ServerFailure(e.message ?? 'An unknown platform error occurred.');
   }
 }

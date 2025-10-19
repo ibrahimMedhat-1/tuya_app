@@ -1,4 +1,11 @@
-import 'package:tuya_app/src/core/utils/app_imports.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tuya_app/src/core/utils/di.dart';
+import 'package:tuya_app/src/core/utils/routing.dart';
+import 'package:tuya_app/src/features/auth/presentation/manager/cubit/auth_cubit.dart';
+import 'package:tuya_app/src/features/auth/presentation/view/screens/login_screen.dart';
+import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
+import 'src/features/home/presentation/view/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,30 +20,35 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthCubit>(
-          create: (context) => sl<AuthCubit>(),
-        ),
-        BlocProvider<HomeCubit>(
-          create: (context) => sl<HomeCubit>(),
-        ),
+        BlocProvider(create: (context) => sl<AuthCubit>()..checkLoginStatus()),
+        BlocProvider(create: (context) => sl<HomeCubit>()),
       ],
       child: MaterialApp(
-        title: 'Tuya Smart Home',
+        title: 'Zero Code',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.light,
-          ),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+        ),
+        home: BlocListener<AuthCubit, AuthCubitState>(
+          listener: (context, state) {
+            if (state is AuthCubitAuthenticated) {
+              context.read<HomeCubit>().loadHomes();
+            }
+          },
+          child: BlocBuilder<AuthCubit, AuthCubitState>(
+            builder: (context, state) {
+              if (state is AuthCubitLoading || state is AuthCubitInitial) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              } else if (state is AuthCubitAuthenticated) {
+                return const HomeScreen();
+              } else {
+                return const LoginScreen();
+              }
+            },
           ),
         ),
-        // Start with home screen to show devices
-        initialRoute: Routes.homeRoute,
         onGenerateRoute: RouteGenerator.generateRoute,
         debugShowCheckedModeBanner: false,
       ),

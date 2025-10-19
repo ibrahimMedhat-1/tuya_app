@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
- import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
+import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
 import 'package:tuya_app/src/features/home/domain/entities/home.dart';
 import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
- import 'package:tuya_app/src/features/home/presentation/view/widgets/device_card.dart';
+import 'package:tuya_app/src/features/home/presentation/view/widgets/device_card.dart';
 import 'package:tuya_app/src/features/auth/presentation/manager/cubit/auth_cubit.dart';
-import 'package:tuya_app/test_ios_connection.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -26,17 +25,6 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // Test iOS Connection Button
-          IconButton(
-            icon: const Icon(Icons.bug_report, color: Colors.orange),
-            tooltip: 'Test iOS Connection',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TestIOSConnection()),
-              );
-            },
-          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.settings_outlined),
             onSelected: (value) {
