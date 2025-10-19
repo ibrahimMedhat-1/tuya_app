@@ -1,0 +1,45 @@
+import 'package:tuya_app/src/core/error/failures.dart';
+import 'package:tuya_app/src/core/utils/either.dart';
+import 'package:tuya_app/src/features/home/domain/entities/device.dart';
+import 'package:tuya_app/src/features/home/domain/entities/home.dart';
+
+import '../../domain/repositories/home_repository.dart';
+import '../datasources/tuya_home_data_source.dart';
+import '../models/device_model.dart';
+import '../models/home_model.dart';
+
+class HomeRepositoryImpl implements HomeRepository {
+  final TuyaHomeDataSource _dataSource;
+  HomeRepositoryImpl(this._dataSource);
+
+  @override
+  Future<Either<Failure, List<HomeEntity>>> getUserHomes() async {
+    final result = await _dataSource.getUserHomes();
+    return result.fold(
+      (failure) => Left(failure),
+      (list) => Right(list.map((e) => HomeModel.fromJson(e).toEntity()).toList()),
+    );
+  }
+
+  @override
+  Future<Either<Failure, List<DeviceEntity>>> getHomeDevices(int homeId) async {
+    final result = await _dataSource.getHomeDevices(homeId);
+    return result.fold(
+      (failure) => Left(failure),
+      (list) => Right(list.map((e) => DeviceModel.fromJson(e).toEntity()).toList()),
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> controlDevice(
+      {required String deviceId, required Map<String, Object> dps}) async {
+    return await _dataSource.controlDevice(deviceId: deviceId, dps: dps);
+  }
+
+  @override
+  Future<Either<Failure, void>> pairDevices() async {
+    return await _dataSource.pairDevices();
+  }
+}
+
+

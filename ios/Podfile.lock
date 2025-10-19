@@ -4,6 +4,8 @@ PODS:
     - ThingFoundationKit
     - ThingUIKit
   - boost-for-react-native (1.63.0)
+  - connectivity_plus (0.0.1):
+    - Flutter
   - DACircularProgress (2.3.1)
   - DoubleConversion (1.1.5)
   - dsBridge (3.0.202.2):
@@ -251,7 +253,11 @@ PODS:
   - MMKV (101.2.13.2):
     - MMKVCore (~> 101.2.14)
   - MMKVCore (101.2.14.1)
+  - network_info_plus (0.0.1):
+    - Flutter
   - OpenCV (4.1.0)
+  - permission_handler_apple (9.3.0):
+    - Flutter
   - Protobuf (3.29.5)
   - React (0.59.13-rc.102):
     - boost-for-react-native (= 1.63.0)
@@ -4580,7 +4586,10 @@ PODS:
   - YYModel (1.0.4)
 
 DEPENDENCIES:
+  - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - Flutter (from `Flutter`)
+  - network_info_plus (from `.symlinks/plugins/network_info_plus/ios`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - ThingSmartActivatorBizBundle
   - ThingSmartBusinessExtensionKit (~> 6.7.0)
   - ThingSmartBusinessExtensionKitBLEExtra (~> 6.7.0)
@@ -5104,14 +5113,21 @@ SPEC REPOS:
     - yoga
 
 EXTERNAL SOURCES:
+  connectivity_plus:
+    :path: ".symlinks/plugins/connectivity_plus/ios"
   Flutter:
     :path: Flutter
+  network_info_plus:
+    :path: ".symlinks/plugins/network_info_plus/ios"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
   ThingSmartCryption:
     :path: "./ios_core_sdk"
 
 SPEC CHECKSUMS:
   ATGestureLockView: 85735681cb8175f592b4b8cf34f58ce111ff59b4
   boost-for-react-native: 39c7adb57c4e60d6c5479dd8623128eb5b3f0f2c
+  connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
   DACircularProgress: 4dd437c0fc3da5161cb289e07ac449493d41db71
   DoubleConversion: e22e0762848812a87afd67ffda3998d9ef29170c
   dsBridge: 57c143231959462a85aaab420ef640fb1edd40bc
@@ -5152,7 +5168,9 @@ SPEC CHECKSUMS:
   MJRefresh: ff9e531227924c84ce459338414550a05d2aea78
   MMKV: 1a98e8d019dd06023091ea48b49b7506fee381a8
   MMKVCore: c24975f7f2532fa96567ae9d2e91bea1256f4a84
+  network_info_plus: 6613d9d7cdeb0e6f366ed4dbe4b3c51c52d567a9
   OpenCV: 52cd4d72ff29e2be83421477aec5447320b7fb19
+  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   Protobuf: 164aea2ae380c3951abdc3e195220c01d17400e0
   React: 15fd7f0f3d45cd17579adda219ac2f34870bf3e4
   react-native-blur: 4996db8b62f00beedfa7f49dc3b436401ed31575

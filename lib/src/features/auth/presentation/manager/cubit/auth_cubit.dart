@@ -14,4 +14,9 @@ class AuthCubit extends Cubit<AuthCubitState> {
       throw Exception('Login failed: ${e.toString()}');
     }
   }
+
+  Future<void> logout() async {
+    // TODO: Implement actual logout logic when needed
+    emit(AuthCubitInitial());
+  }
 }

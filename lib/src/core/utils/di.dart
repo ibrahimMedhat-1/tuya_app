@@ -4,6 +4,11 @@ import 'package:tuya_app/src/features/device_pairing/data/datasources/tuya_devic
 import 'package:tuya_app/src/features/device_pairing/data/repositories/device_pairing_repository_impl.dart';
 import 'package:tuya_app/src/features/device_pairing/domain/repositories/device_pairing_repository.dart';
 import 'package:tuya_app/src/features/device_pairing/presentation/manager/cubit/device_pairing_cubit.dart';
+import 'package:tuya_app/src/features/home/data/datasources/tuya_home_data_source.dart';
+import 'package:tuya_app/src/features/home/data/repositories/home_repository_impl.dart';
+import 'package:tuya_app/src/features/home/domain/repositories/home_repository.dart';
+import 'package:tuya_app/src/features/home/domain/usecases/home_usecases.dart';
+import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
 
 import 'app_imports.dart';
 
@@ -19,6 +24,32 @@ Future<void> getItInit() async {
     () => AuthUseCase(sl<AuthRepository>()),
   );
   sl.registerLazySingleton<AuthCubit>(() => AuthCubit());
+
+  // Home dependencies
+  sl.registerLazySingleton<TuyaHomeDataSource>(() => TuyaHomeDataSource());
+  sl.registerLazySingleton<HomeRepository>(
+    () => HomeRepositoryImpl(sl<TuyaHomeDataSource>()),
+  );
+  sl.registerLazySingleton<GetUserHomesUseCase>(
+    () => GetUserHomesUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<GetHomeDevicesUseCase>(
+    () => GetHomeDevicesUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<ControlDeviceUseCase>(
+    () => ControlDeviceUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<PairDeviceUseCase>(
+    () => PairDeviceUseCase(sl<HomeRepository>()),
+  );
+  sl.registerFactory<HomeCubit>(
+    () => HomeCubit(
+      sl<GetUserHomesUseCase>(),
+      sl<GetHomeDevicesUseCase>(),
+      sl<ControlDeviceUseCase>(),
+      sl<PairDeviceUseCase>(),
+    ),
+  );
 
   // Device pairing dependencies
   sl.registerLazySingleton<TuyaDevicePairingDataSource>(

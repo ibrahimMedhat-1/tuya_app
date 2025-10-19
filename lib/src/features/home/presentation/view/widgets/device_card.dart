@@ -211,7 +211,7 @@ class DeviceCard extends StatelessWidget {
   }
 
   IconData _getDeviceIcon() {
-    switch (device.detectedType) {
+    switch (device.deviceType) {
       case 'light':
         return Icons.lightbulb_outline;
       case 'fan':
