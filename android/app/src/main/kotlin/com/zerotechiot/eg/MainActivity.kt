@@ -1,8 +1,5 @@
 package com.zerotechiot.eg
 
-// BizBundle imports - these may need to be adjusted based on actual package structure
-// import com.thingclips.smart.bizbundle.basekit.microservice.AbsPanelCallerService
-// import com.thingclips.smart.bizbundle.basekit.microservice.MicroContext
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -19,13 +16,14 @@ import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.android.user.api.ILogoutCallback
 import com.thingclips.smart.android.user.bean.User
 import com.thingclips.smart.api.MicroContext
+import com.thingclips.smart.api.service.MicroServiceManager
 import com.thingclips.smart.clearcache.api.ClearCacheService
 import com.thingclips.smart.commonbiz.bizbundle.family.api.AbsBizBundleFamilyService
 import com.thingclips.smart.home.sdk.ThingHomeSdk
+import com.thingclips.smart.panelcaller.api.AbsPanelCallerService
 import com.thingclips.smart.home.sdk.bean.HomeBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
-import com.thingclips.smart.panelcaller.api.AbsPanelCallerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -94,13 +92,13 @@ class MainActivity : FlutterActivity() {
                 }
 
                 "openDeviceControlPanel" -> {
-                    val homeId = call.argument<Int>("homeId")
-                    val homeName = call.argument<String>("deviceId")
                     val deviceId = call.argument<String>("deviceId")
-                    if (deviceId != null) {
-                        openDeviceControlPanel(deviceId, homeId?.toLong() ?: 0, homeName ?: "", result)
+                    val homeId = call.argument<Int>("homeId")
+                    val homeName = call.argument<String>("homeName")
+                    if (deviceId != null && homeId != null) {
+                        openDeviceControlPanel(deviceId, homeId.toLong(), homeName ?: "", result)
                     } else {
-                        result.error("INVALID_ARGUMENTS", "deviceId is required", null)
+                        result.error("INVALID_ARGUMENTS", "deviceId and homeId are required", null)
                     }
                 }
 
@@ -190,43 +188,76 @@ class MainActivity : FlutterActivity() {
 
     private fun openDeviceControlPanel(deviceId: String, homeId: Long, homeName: String, result: MethodChannel.Result) {
         try {
-            Log.d(
-                "TuyaSDK",
-                "Opening device control panel for device: $deviceId using Tuya BizBundle"
-            )
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+            Log.d("TuyaSDK", "🚀 Opening device control panel")
+            Log.d("TuyaSDK", "   Device ID: $deviceId")
+            Log.d("TuyaSDK", "   Home: $homeName (ID: $homeId)")
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+            
+            // CRITICAL: Check storage permissions before opening panel
+            // Panel needs to extract resources to storage
+            if (!checkPermissions()) {
+                Log.w("TuyaSDK", "⚠️ Storage permissions not granted, requesting now...")
+                requestPermissions()
+                // Note: Panel will open next time after user grants permissions
+                result.error(
+                    "PERMISSIONS_REQUIRED",
+                    "Storage permissions are required to load device panel. Please try again.",
+                    null
+                )
+                return
+            }
+            
             try {
+                // Clear cache first
                 val cacheService = MicroContext.getServiceManager()
                     .findServiceByInterface(ClearCacheService::class.java.name) as? ClearCacheService
                 cacheService?.clearCache(this)
+                
                 // 1. Initialize home service first
-                val familyService = MicroContext.getServiceManager()
-                    .findServiceByInterface(AbsBizBundleFamilyService::class.java.name) as? AbsBizBundleFamilyService
-                familyService?.shiftCurrentFamily(homeId, homeName)
+                val serviceManager = MicroServiceManager.getInstance()
+                if (serviceManager == null) {
+                    Log.e("TuyaSDK", "❌ MicroServiceManager is null - services not initialized")
+                    result.error("SERVICE_MANAGER_NULL", "MicroServiceManager is not initialized", null)
+                    return
+                }
+                
+                val familyService = serviceManager.findServiceByInterface(AbsBizBundleFamilyService::class.java.name) as? AbsBizBundleFamilyService
+                if (familyService == null) {
+                    Log.e("TuyaSDK", "❌ AbsBizBundleFamilyService not found - family BizBundle not properly initialized")
+                    result.error("FAMILY_SERVICE_NOT_FOUND", "Family service not available - check BizBundle initialization", null)
+                    return
+                }
+                
+                Log.d("TuyaSDK", "✅ AbsBizBundleFamilyService found, switching to home: $homeId")
+                familyService.shiftCurrentFamily(homeId, homeName)
 
                 // 2. Then open panel
-                val service = MicroContext.getServiceManager()
+                val panelService = MicroContext.getServiceManager()
                     .findServiceByInterface(AbsPanelCallerService::class.java.name) as? AbsPanelCallerService
-                service?.goPanelWithCheckAndTip(this, deviceId)
-
-            } catch (bizBundleException: Exception) {
-                Log.e(
-                    "TuyaSDK",
-                    "BizBundle control panel failed: ${bizBundleException.message}",
-                    bizBundleException
-                )
+                if (panelService == null) {
+                    Log.e("TuyaSDK", "❌ AbsPanelCallerService not found")
+                    result.error("PANEL_SERVICE_NOT_FOUND", "Panel service not available", null)
+                    return
+                }
+                
+                Log.d("TuyaSDK", "✅ AbsPanelCallerService found, opening panel for device: $deviceId")
+                panelService.goPanelWithCheckAndTip(this, deviceId)
+                
+            } catch (panelException: Exception) {
+                Log.e("TuyaSDK", "❌ Failed to open panel: ${panelException.message}", panelException)
                 result.error(
-                    "BIZBUNDLE_FAILED",
-                    "Failed to open device control panel: ${bizBundleException.message}",
+                    "PANEL_FAILED",
+                    "Failed to open device panel: ${panelException.message}",
                     null
                 )
             }
-
-
+            
         } catch (e: Exception) {
-            Log.e("TuyaSDK", "Failed to open device control panel: ${e.message}", e)
+            Log.e("TuyaSDK", "❌ Unexpected error: ${e.message}", e)
             result.error(
-                "OPEN_PANEL_FAILED",
-                "Failed to open device control panel: ${e.message}",
+                "UNEXPECTED_ERROR",
+                "Unexpected error: ${e.message}",
                 null
             )
         }
@@ -372,6 +403,25 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        // CRITICAL: Check storage permissions for BizBundle panel extraction
+        // For Android 6-12 (API 23-32)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
+
         return permissions.isEmpty()
     }
 
@@ -403,7 +453,27 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        // CRITICAL: Request storage permissions for BizBundle panel extraction
+        // For Android 6-12 (API 23-32)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
+
         if (permissions.isNotEmpty()) {
+            Log.d("TuyaSDK", "Requesting permissions: ${permissions.joinToString(", ")}")
             ActivityCompat.requestPermissions(this, permissions.toTypedArray(), 1001)
         }
     }

@@ -25,6 +25,10 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // CRITICAL: Enable MultiDex for large app
+        multiDexEnabled = true
+        
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
@@ -92,6 +96,10 @@ android {
         maven { url = uri("https://jitpack.io") }
         maven { url = uri("https://central.maven.org/maven2/") }
         maven { url = uri("https://developer.huawei.com/repo/") }
+        // Add repository for ImmersionBar
+        maven { url = uri("https://maven.aliyun.com/repository/jcenter") }
+        // Add JCenter for ImmersionBar
+        maven { url = uri("https://jcenter.bintray.com/") }
     }
 }
 
@@ -101,10 +109,8 @@ flutter {
 
 configurations.all {
     exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
-    exclude(group = "commons-io", module = "commons-io")
     resolutionStrategy {
         force("com.squareup.okhttp3:okhttp:4.12.0")
-        force("commons-io:commons-io:2.11.0")
     }
 }
 
@@ -121,58 +127,122 @@ dependencies {
     implementation("com.thingclips.smart:thingsmart:6.7.3") {
         exclude(module = "thingsmart-modularCampAnno")
         exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
-        exclude(group = "commons-io", module = "commons-io")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
 
     // Tuya expansion SDK
     implementation("com.thingclips.smart:thingsmart-expansion-sdk:6.7.0") {
         exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
-        exclude(group = "commons-io", module = "commons-io")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
 
     // Tuya BizBundle BOM for version management - MUST use platform()
-    implementation(platform("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.25"))
+    implementation(platform("com.thingclips.smart:thingsmart-BizBundlesBom:6.7.31"))
     
     // Device Control UI BizBundle - REQUIRED (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-panel") {
         exclude(group = "net.zetetic", module = "android-database-sqlcipher")
         exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    // Family BizBundle - REQUIRED for home management (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-family") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    // MiniApp BizBundle
+    implementation("com.thingclips.smart:thingsmart-bizbundle-miniapp") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    implementation("com.thingclips.smart:thingsmart-bizbundle-homekit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    implementation("com.thingclips.smart:thingsmart-bizbundle-ipckit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    implementation("com.thingclips.smart:thingsmart-bizbundle-p2pkit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    implementation("com.thingclips.smart:thingsmart-bizbundle-camera_panel") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    // Map extension
+    api("com.thingclips.smart:thingsmart-bizbundle-mapkit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    // Media extension
+    api("com.thingclips.smart:thingsmart-bizbundle-mediakit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    api("com.thingclips.smart:thingsmart-ipcsdk:6.7.2") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
     // Basic extension capabilities - REQUIRED (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-basekit") {
         exclude(group = "net.zetetic", module = "android-database-sqlcipher")
         exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
     // Business extension capabilities - REQUIRED (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-bizkit") {
         exclude(group = "net.zetetic", module = "android-database-sqlcipher")
         exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
     // Device control capabilities - REQUIRED (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-devicekit") {
         exclude(group = "net.zetetic", module = "android-database-sqlcipher")
         exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
     // Device Activator BizBundle (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-device_activator") {
         exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
-        exclude(group = "commons-io", module = "commons-io")
         exclude(group = "net.zetetic", module = "android-database-sqlcipher")
         exclude(group = "com.tencent.wcdb", module = "wcdb-android")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
-
+    
     // BizBundle Initializer - CRITICAL for BizBundle to work (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-initializer") {
         exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
-        exclude(group = "commons-io", module = "commons-io")
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
 
     // Tuya theme SDK - required for BizBundle UI
     implementation("com.thingclips.smart:thingsmart-theme-open:2.0.6")
+    
+    // CRITICAL: MultiDex - required for large app with many dependencies
+    implementation("androidx.multidex:multidex:2.0.1")
 
     // Android dependencies
     implementation("androidx.appcompat:appcompat:1.7.1")

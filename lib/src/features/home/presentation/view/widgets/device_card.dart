@@ -4,13 +4,11 @@ import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
 import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/features/home/domain/entities/device.dart';
 
-class DeviceCard extends StatelessWidget {
+class DeviceCard extends StatefulWidget {
   final DeviceEntity device;
   final bool isLoading;
   final int? homeId;
   final String? homeName;
-
-  static const MethodChannel _channel = MethodChannel('com.zerotechiot.eg/tuya_sdk');
 
   const DeviceCard({
     super.key,
@@ -19,6 +17,15 @@ class DeviceCard extends StatelessWidget {
     this.homeId,
     this.homeName,
   });
+
+  @override
+  State<DeviceCard> createState() => _DeviceCardState();
+}
+
+class _DeviceCardState extends State<DeviceCard> {
+  static const MethodChannel _channel = MethodChannel('com.zerotechiot.eg/tuya_sdk');
+  bool _isOpeningPanel = false;
+  DateTime? _lastTapTime;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +48,7 @@ class DeviceCard extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: device.isOnline
+              colors: widget.device.isOnline
                   ? [
                       Colors.blue.shade50,
                       Colors.blue.shade100,
@@ -66,7 +73,7 @@ class DeviceCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(context.isMobile ? 12 : 10),
                       border: Border.all(
-                        color: device.isOnline ? Colors.blue.shade200 : Colors.grey.shade300,
+                        color: widget.device.isOnline ? Colors.blue.shade200 : Colors.grey.shade300,
                         width: context.isMobile ? 1.5 : 1,
                       ),
                     ),
@@ -83,7 +90,7 @@ class DeviceCard extends StatelessWidget {
 
               // Device Name
               Text(
-                device.name,
+                widget.device.name,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: context.isMobile ? 16 : 14,
@@ -96,7 +103,7 @@ class DeviceCard extends StatelessWidget {
 
               // Device ID
               Text(
-                'ID: ${device.deviceId}',
+                'ID: ${widget.device.deviceId}',
                 style: TextStyle(
                   color: Colors.grey.shade600,
                   fontSize: context.isMobile ? 12 : 10,
@@ -115,13 +122,13 @@ class DeviceCard extends StatelessWidget {
                   vertical: context.isMobile ? 4 : 3,
                 ),
                 decoration: BoxDecoration(
-                  color: device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
+                  color: widget.device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(context.isMobile ? 8 : 6),
                 ),
                 child: Text(
-                  device.deviceType.toUpperCase(),
+                  widget.device.deviceType.toUpperCase(),
                   style: TextStyle(
-                    color: device.isOnline ? Colors.blue.shade700 : Colors.grey.shade600,
+                    color: widget.device.isOnline ? Colors.blue.shade700 : Colors.grey.shade600,
                     fontSize: context.isMobile ? 10 : 8,
                     fontWeight: FontWeight.w600,
                   ),
@@ -135,17 +142,17 @@ class DeviceCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    device.isOnline ? 'Online' : 'Offline',
+                    widget.device.isOnline ? 'Online' : 'Offline',
                     style: TextStyle(
-                      color: device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
+                      color: widget.device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
                       fontWeight: FontWeight.w600,
                       fontSize: context.isMobile ? 12 : 10,
                     ),
                   ),
                   Icon(
-                    device.isOnline ? Icons.wifi : Icons.wifi_off,
+                    widget.device.isOnline ? Icons.wifi : Icons.wifi_off,
                     size: context.isMobile ? 16 : 14,
-                    color: device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
+                    color: widget.device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
                   ),
                 ],
               ),
@@ -158,9 +165,9 @@ class DeviceCard extends StatelessWidget {
 
   Widget _buildDeviceImage(BuildContext context) {
     // If device has an image URL, try to load it
-    if (device.image.isNotEmpty && device.image.startsWith('http')) {
+    if (widget.device.image.isNotEmpty && widget.device.image.startsWith('http')) {
       return Image.network(
-        device.image,
+        widget.device.image,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return _buildFallbackIcon(context);
@@ -185,11 +192,11 @@ class DeviceCard extends StatelessWidget {
 
   Widget _buildFallbackIcon(BuildContext context) {
     return Container(
-      color: device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
+      color: widget.device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
       child: Icon(
         _getDeviceIcon(),
         size: context.isMobile ? 28 : 24,
-        color: device.isOnline ? Colors.blue.shade600 : Colors.grey.shade600,
+        color: widget.device.isOnline ? Colors.blue.shade600 : Colors.grey.shade600,
       ),
     );
   }
@@ -202,7 +209,7 @@ class DeviceCard extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: device.isOnline ? Colors.green : Colors.red,
+            color: widget.device.isOnline ? Colors.green : Colors.red,
             shape: BoxShape.circle,
           ),
         );
@@ -211,7 +218,7 @@ class DeviceCard extends StatelessWidget {
   }
 
   IconData _getDeviceIcon() {
-    switch (device.deviceType) {
+    switch (widget.device.deviceType) {
       case 'light':
         return Icons.lightbulb_outline;
       case 'fan':
@@ -236,13 +243,29 @@ class DeviceCard extends StatelessWidget {
   }
 
   void _handleCardTap() {
+      // DEBOUNCING: Prevent multiple rapid taps
+      final now = DateTime.now();
+      if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds < 2) {
+        print('⚠️  [Flutter] Ignoring rapid tap - please wait for panel to load');
+        print('   Time since last tap: ${now.difference(_lastTapTime!).inMilliseconds}ms');
+        return;
+      }
+      
+      // Prevent tapping while panel is already opening
+      if (_isOpeningPanel) {
+        print('⚠️  [Flutter] Panel is already opening - please wait...');
+        return;
+      }
+      
+      _lastTapTime = now;
+      
       print('');
       print('═══════════════════════════════════════════════════════════');
       print('🔵 [Flutter] Device card TAPPED!');
-      print('   Device ID: ${device.deviceId}');
-      print('   Device Name: ${device.name}');
-      print('   Home ID: $homeId');
-      print('   Home Name: ${homeName ?? 'Home'}');
+      print('   Device ID: ${widget.device.deviceId}');
+      print('   Device Name: ${widget.device.name}');
+      print('   Home ID: ${widget.homeId}');
+      print('   Home Name: ${widget.homeName ?? 'Home'}');
       print('   Channel: ${_channel.name}');
       print('═══════════════════════════════════════════════════════════');
       print('');
@@ -250,22 +273,45 @@ class DeviceCard extends StatelessWidget {
   }
 
   Future<void> _openDeviceControlPanel() async {
+    // Set loading state
+    setState(() {
+      _isOpeningPanel = true;
+    });
+    
     try {
-      print('🚀 [Flutter] Calling iOS method: openDeviceControlPanel');
+      print('🚀 [Flutter] Calling platform method: openDeviceControlPanel');
       print('   Arguments:');
-      print('     - deviceId: ${device.deviceId}');
-      print('     - homeId: $homeId');
-      print('     - homeName: ${homeName ?? 'Home'}');
+      print('     - deviceId: ${widget.device.deviceId}');
+      print('     - homeId: ${widget.homeId}');
+      print('     - homeName: ${widget.homeName ?? 'Home'}');
+      print('');
+      print('⏳ [Flutter] Please wait - panel resources are downloading...');
+      print('   This may take 10-30 seconds on first load');
+      print('');
       
       final result = await _channel.invokeMethod('openDeviceControlPanel', {
-        'deviceId': device.deviceId,
-        'homeId': homeId,
-        'homeName': homeName ?? 'Home',
+        'deviceId': widget.device.deviceId,
+        'homeId': widget.homeId,
+        'homeName': widget.homeName ?? 'Home',
       });
       
-      print('✅ [Flutter] iOS method call completed successfully!');
-      print('   Result from iOS: $result');
+      print('✅ [Flutter] Platform method call completed successfully!');
+      print('   Result: $result');
+      
+      // Reset loading state after a delay (panel Activity takes over)
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (mounted) {
+        setState(() {
+          _isOpeningPanel = false;
+        });
+      }
     } on PlatformException catch (e) {
+      if (mounted) {
+        setState(() {
+          _isOpeningPanel = false;
+        });
+      }
+      
       print('');
       print('❌❌❌ [Flutter] PlatformException ❌❌❌');
       print("   Message: '${e.message}'");
@@ -274,15 +320,37 @@ class DeviceCard extends StatelessWidget {
       debugPrint("   Stack trace: ${e.stacktrace}");
       print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
       print('');
+      
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open device panel: ${e.message}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } on MissingPluginException catch (e) {
+      if (mounted) {
+        setState(() {
+          _isOpeningPanel = false;
+        });
+      }
+      
       print('');
       print('❌❌❌ [Flutter] MissingPluginException ❌❌❌');
-      print('   MethodChannel handler NOT registered on iOS!');
-      print('   This means iOS is not listening to this channel.');
+      print('   MethodChannel handler NOT registered!');
       print('   Exception: $e');
       print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
       print('');
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isOpeningPanel = false;
+        });
+      }
+      
       print('');
       print('❌❌❌ [Flutter] Unexpected Error ❌❌❌');
       print('   Error: $e');

@@ -1,0 +1,4 @@
+ dependencies{
+        implementation 'com.thingclips.smart:thingsmart:6.2.1'
+        implementation 'com.thingclips.smart:thingsmart-outdoor-sdk:6.0.0'
+    }

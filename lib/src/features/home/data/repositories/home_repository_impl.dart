@@ -22,8 +22,8 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
-  Future<Either<Failure, List<DeviceEntity>>> getHomeDevices(int homeId) async {
-    final result = await _dataSource.getHomeDevices(homeId);
+  Future<Either<Failure, List<DeviceEntity>>> getHomeDevices(int homeId, {String? homeName}) async {
+    final result = await _dataSource.getHomeDevices(homeId, homeName: homeName);
     return result.fold(
       (failure) => Left(failure),
       (list) => Right(list.map((e) => DeviceModel.fromJson(e).toEntity()).toList()),

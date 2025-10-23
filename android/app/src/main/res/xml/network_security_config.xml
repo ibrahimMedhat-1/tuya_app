@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for Tuya panel resources -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Trust Tuya domains -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">tuyaeu.com</domain>
+        <domain includeSubdomains="true">tuyaus.com</domain>
+        <domain includeSubdomains="true">tuyacn.com</domain>
+        <domain includeSubdomains="true">tuyain.com</domain>
+        <domain includeSubdomains="true">tuya.com</domain>
+    </domain-config>
+</network-security-config>
+

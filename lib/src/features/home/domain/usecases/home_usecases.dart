@@ -18,8 +18,8 @@ class GetHomeDevicesUseCase {
 
   GetHomeDevicesUseCase(this._repository);
 
-  Future<Either<Failure, List<DeviceEntity>>> call(int homeId) =>
-      _repository.getHomeDevices(homeId);
+  Future<Either<Failure, List<DeviceEntity>>> call(int homeId, {String? homeName}) =>
+      _repository.getHomeDevices(homeId, homeName: homeName);
 }
 
 class ControlDeviceUseCase {

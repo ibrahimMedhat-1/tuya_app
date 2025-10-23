@@ -17,9 +17,9 @@ allprojects {
             force("com.squareup.okhttp3:okhttp-urlconnection:5.0.0-alpha.11")
             force("com.squareup.okio:okio-jvm:3.2.0")
         }
-        // Exclude commons-io globally to prevent conflicts (embedded in Tuya SDK)
-        exclude(group = "commons-io", module = "commons-io")
-        exclude(group = "org.apache.commons", module = "commons-lang3")
+        // Exclude problematic dependencies globally
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
 }
 

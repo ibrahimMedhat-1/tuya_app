@@ -36,7 +36,14 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> loadDevices(int homeId) async {
     emit(state.copyWith(
         status: HomeStatus.loading, errorMessage: null, selectedHomeId: homeId));
-    final result = await _getHomeDevices(homeId);
+    
+    // Get the home name to pass to Android for BizBundle context
+    final homeName = state.homes.firstWhere(
+      (home) => home.homeId == homeId,
+      orElse: () => state.homes.first,
+    ).name;
+    
+    final result = await _getHomeDevices(homeId, homeName: homeName);
     result.fold(
       (failure) => emit(state.copyWith(
           status: HomeStatus.failure, errorMessage: failure.message)),

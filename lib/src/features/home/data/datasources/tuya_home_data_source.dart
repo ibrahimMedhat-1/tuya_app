@@ -17,10 +17,11 @@ class TuyaHomeDataSource {
   }
 
   Future<Either<Failure, List<Map<String, dynamic>>>> getHomeDevices(
-      int homeId) async {
+      int homeId, {String? homeName}) async {
     try {
       final result = await AppConstants.channel.invokeMethod('getHomeDevices', {
         'homeId': homeId,
+        'homeName': homeName,
       });
       final List list = result as List;
       return Right(list.cast<Map>().map((e) => Map<String, dynamic>.from(e)).toList());

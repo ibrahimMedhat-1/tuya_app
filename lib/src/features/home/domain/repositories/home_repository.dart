@@ -6,7 +6,7 @@ import '../entities/home.dart';
 
 abstract class HomeRepository {
   Future<Either<Failure, List<HomeEntity>>> getUserHomes();
-  Future<Either<Failure, List<DeviceEntity>>> getHomeDevices(int homeId);
+  Future<Either<Failure, List<DeviceEntity>>> getHomeDevices(int homeId, {String? homeName});
   Future<Either<Failure, void>> controlDevice({
     required String deviceId,
     required Map<String, Object> dps,

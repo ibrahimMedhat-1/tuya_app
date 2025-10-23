@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?><resources>
-  <string name="app_name">Zero Code</string>
   <string name="AES_KEY_LOAD_ERROR">Failed to get decryption service</string>
   <string name="APP_PUSH_F8WMKVXFNEDFV3TZ">You have only {0} minutes left for {1}</string>
   <string name="APP_PUSH_F8WMKVXFNEDFV3TZ_TITLE">Notification</string>
@@ -6466,6 +6465,6 @@ View \"Feature Details\" to learn more details.</string>
   <string name="xsense_sub_ywbj">RF Smoke Alarm</string>
   <string name="you_are_only_manage">Please assign another administrator before leaving.</string>
   <string name="zigbee_dev">ZigBee</string>
-  <string name="tuya_app_key">xxft3fqw93d375ucppkn</string>
-  <string name="tuya_app_secret">k8u9edtefgrwcmkqaesra9gmgmpuh8uy</string>
+    <string name="tuya_app_key">xxft3fqw93d375ucppkn</string>
+    <string name="tuya_app_secret">k8u9edtefgrwcmkqaesra9gmgmpuh8uy</string>
 </resources>
