@@ -37,6 +37,35 @@ class TuyaAuthDataSource {
     }
   }
 
+  Future<Either<Failure, User>> register(String email, String password, String verificationCode) async {
+    try {
+      final result = await AppConstants.channel.invokeMethod('register', {
+        'email': email,
+        'password': password,
+        'verificationCode': verificationCode,
+      });
+      _currentUser = User.fromJson(result);
+      return Right(_currentUser!);
+    } on PlatformException catch (e) {
+      return Left(_handlePlatformException(e));
+    } catch (e) {
+      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
+  Future<Either<Failure, String>> sendVerificationCode(String email) async {
+    try {
+      final result = await AppConstants.channel.invokeMethod('sendVerificationCode', {
+        'email': email,
+      });
+      return Right(result.toString());
+    } on PlatformException catch (e) {
+      return Left(_handlePlatformException(e));
+    } catch (e) {
+      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+    }
+  }
+
   Future<Either<Failure, void>> logout() async {
     try {
       await AppConstants.channel.invokeMethod('logout');

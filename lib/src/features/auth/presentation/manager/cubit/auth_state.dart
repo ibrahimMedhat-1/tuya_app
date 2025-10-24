@@ -17,3 +17,5 @@ final class AuthCubitError extends AuthCubitState {
   final String message;
   AuthCubitError(this.message);
 }
+
+final class AuthCubitVerificationCodeSent extends AuthCubitState {}

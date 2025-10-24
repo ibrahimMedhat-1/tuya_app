@@ -28,6 +28,38 @@ class AuthUseCase {
     return await _authRepository.isLoggedIn();
   }
 
+  Future<Either<Failure, User>> register(String email, String password, String verificationCode) async {
+    if (email.isEmpty || password.isEmpty || verificationCode.isEmpty) {
+      return const Left(ValidationFailure('Email, password, and verification code cannot be empty'));
+    }
+
+    if (!email.contains('@')) {
+      return const Left(ValidationFailure('Please enter a valid email address'));
+    }
+
+    if (password.length < 6) {
+      return const Left(ValidationFailure('Password must be at least 6 characters long'));
+    }
+
+    if (verificationCode.length < 4) {
+      return const Left(ValidationFailure('Verification code must be at least 4 characters'));
+    }
+
+    return await _authRepository.register(email, password, verificationCode);
+  }
+
+  Future<Either<Failure, String>> sendVerificationCode(String email) async {
+    if (email.isEmpty) {
+      return const Left(ValidationFailure('Email cannot be empty'));
+    }
+
+    if (!email.contains('@')) {
+      return const Left(ValidationFailure('Please enter a valid email address'));
+    }
+
+    return await _authRepository.sendVerificationCode(email);
+  }
+
   Future<Either<Failure, void>> logout() async {
     return await _authRepository.logout();
   }

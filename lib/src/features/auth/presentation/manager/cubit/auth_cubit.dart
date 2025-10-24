@@ -33,6 +33,24 @@ class AuthCubit extends Cubit<AuthCubitState> {
     );
   }
 
+  Future<void> register(String email, String password, String verificationCode) async {
+    emit(AuthCubitLoading());
+    final result = await _authUseCase.register(email, password, verificationCode);
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (user) => emit(AuthCubitAuthenticated(user)),
+    );
+  }
+
+  Future<void> sendVerificationCode(String email) async {
+    emit(AuthCubitLoading());
+    final result = await _authUseCase.sendVerificationCode(email);
+    result.fold(
+      (failure) => emit(AuthCubitError(failure.message)),
+      (_) => emit(AuthCubitVerificationCodeSent()),
+    );
+  }
+
   Future<void> logout() async {
     emit(AuthCubitLoading());
     final result = await _authUseCase.logout();

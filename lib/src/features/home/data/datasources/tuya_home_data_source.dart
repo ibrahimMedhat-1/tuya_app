@@ -49,42 +49,13 @@ class TuyaHomeDataSource {
 
   Future<Either<Failure, void>> pairDevices() async {
     try {
-      print('');
-      print('═══════════════════════════════════════════════════════════');
-      print('🔵 [Flutter] "Add Device" button TAPPED!');
-      print('   Channel: ${AppConstants.channel.name}');
-      print('   Method: pairDevices');
-      print('═══════════════════════════════════════════════════════════');
-      print('');
-      
-      print('🚀 [Flutter] Calling iOS method: pairDevices');
       await AppConstants.channel.invokeMethod('pairDevices');
-      
-      print('✅ [Flutter] iOS method call completed successfully!');
       return const Right(null);
     } on PlatformException catch (e) {
-      print('');
-      print('❌❌❌ [Flutter] PlatformException ❌❌❌');
-      print("   Message: '${e.message}'");
-      print("   Code: ${e.code}");
-      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
-      print('');
       return Left(ServerFailure(e.message ?? 'Failed to pair devices'));
     } on MissingPluginException catch (e) {
-      print('');
-      print('❌❌❌ [Flutter] MissingPluginException ❌❌❌');
-      print('   MethodChannel handler NOT registered on iOS!');
-      print('   Exception: $e');
-      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
-      print('');
-      return Left(ServerFailure('Failed to pair devices'));
+      return Left(ServerFailure('Failed to pair devices: $e'));
     } catch (e) {
-      print('');
-      print('❌❌❌ [Flutter] Unexpected Error ❌❌❌');
-      print('   Error: $e');
-      print('   Type: ${e.runtimeType}');
-      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
-      print('');
       return Left(ServerFailure(e.toString()));
     }
   }

@@ -14,6 +14,7 @@ import com.thingclips.smart.activator.core.kit.callback.ThingActivatorScanCallba
 import com.thingclips.smart.activator.plug.mesosphere.ThingDeviceActivatorManager
 import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.android.user.api.ILogoutCallback
+import com.thingclips.smart.android.user.api.IRegisterCallback
 import com.thingclips.smart.android.user.bean.User
 import com.thingclips.smart.api.MicroContext
 import com.thingclips.smart.api.service.MicroServiceManager
@@ -24,6 +25,7 @@ import com.thingclips.smart.panelcaller.api.AbsPanelCallerService
 import com.thingclips.smart.home.sdk.bean.HomeBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
+import com.thingclips.smart.sdk.api.IResultCallback
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -65,6 +67,27 @@ class MainActivity : FlutterActivity() {
 
                 "isLoggedIn" -> {
                     checkLoginStatus(result)
+                }
+
+                "register" -> {
+                    val email = call.argument<String>("email")
+                    val password = call.argument<String>("password")
+                    val verificationCode = call.argument<String>("verificationCode")
+
+                    if (email != null && password != null && verificationCode != null) {
+                        registerUser(email, password, verificationCode, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "Email, password, and verification code are required", null)
+                    }
+                }
+
+                "sendVerificationCode" -> {
+                    val email = call.argument<String>("email")
+                    if (email != null) {
+                        sendVerificationCode(email, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "Email is required", null)
+                    }
                 }
 
                 "getHomes" -> {
@@ -182,6 +205,111 @@ class MainActivity : FlutterActivity() {
             result.success(userData)
         } else {
             result.success(null)
+        }
+    }
+
+    private fun sendVerificationCode(email: String, result: MethodChannel.Result) {
+        Log.d("TuyaSDK", "Sending verification code to: $email")
+        
+        // Validate email format
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Log.e("TuyaSDK", "Invalid email format: $email")
+            result.error("INVALID_EMAIL", "Invalid email format", null)
+            return
+        }
+        
+        // Check if SDK is properly initialized
+        val userInstance = ThingHomeSdk.getUserInstance()
+        if (userInstance == null) {
+            Log.e("TuyaSDK", "User instance is null - SDK not properly initialized")
+            result.error("SDK_NOT_INITIALIZED", "SDK not properly initialized", null)
+            return
+        }
+        
+        Log.d("TuyaSDK", "User instance found, calling sendVerifyCodeWithUserName")
+        
+        try {
+            ThingHomeSdk.getUserInstance().sendVerifyCodeWithUserName(
+                email,
+                null, // Region code, can be null
+                "US", // Country code
+                1, // 1 for registration
+                object : IResultCallback {
+                    override fun onSuccess() {
+                        Log.d("TuyaSDK", "Verification code sent successfully to: $email")
+                        result.success("Verification code sent successfully")
+                    }
+
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "Failed to send verification code - Code: $code, Error: $error")
+                        result.error("SEND_CODE_FAILED", "Code: $code, Error: $error", null)
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Exception while sending verification code: ${e.message}", e)
+            result.error("SEND_CODE_EXCEPTION", "Exception while sending verification code: ${e.message}", null)
+        }
+    }
+
+    private fun registerUser(email: String, password: String, verificationCode: String, result: MethodChannel.Result) {
+        Log.d("TuyaSDK", "Registering user with email: $email")
+        
+        // Validate inputs
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Log.e("TuyaSDK", "Invalid email format: $email")
+            result.error("INVALID_EMAIL", "Invalid email format", null)
+            return
+        }
+        
+        if (password.length < 6) {
+            Log.e("TuyaSDK", "Password too short: ${password.length}")
+            result.error("INVALID_PASSWORD", "Password must be at least 6 characters", null)
+            return
+        }
+        
+        if (verificationCode.length < 4) {
+            Log.e("TuyaSDK", "Verification code too short: ${verificationCode.length}")
+            result.error("INVALID_VERIFICATION_CODE", "Verification code must be at least 4 characters", null)
+            return
+        }
+        
+        // Check if SDK is properly initialized
+        val userInstance = ThingHomeSdk.getUserInstance()
+        if (userInstance == null) {
+            Log.e("TuyaSDK", "User instance is null - SDK not properly initialized")
+            result.error("SDK_NOT_INITIALIZED", "SDK not properly initialized", null)
+            return
+        }
+        
+        Log.d("TuyaSDK", "User instance found, calling registerAccountWithEmail")
+        
+        try {
+            ThingHomeSdk.getUserInstance().registerAccountWithEmail(
+                email,
+                password,
+                verificationCode,
+                "US", // Country code
+                object : IRegisterCallback {
+                    override fun onSuccess(user: User?) {
+                        Log.d("TuyaSDK", "User registered successfully: ${user?.email}")
+                        val userData = mapOf(
+                            "id" to (user?.uid ?: ""),
+                            "email" to (user?.email ?: email),
+                            "name" to (user?.username ?: email.split("@")[0]),
+                        )
+                        result.success(userData)
+                    }
+
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "Registration failed - Code: $code, Error: $error")
+                        result.error("REGISTRATION_FAILED", "Code: $code, Error: $error", null)
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Exception while registering user: ${e.message}", e)
+            result.error("REGISTRATION_EXCEPTION", "Exception while registering user: ${e.message}", null)
         }
     }
 

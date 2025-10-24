@@ -246,29 +246,16 @@ class _DeviceCardState extends State<DeviceCard> {
       // DEBOUNCING: Prevent multiple rapid taps
       final now = DateTime.now();
       if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds < 2) {
-        print('⚠️  [Flutter] Ignoring rapid tap - please wait for panel to load');
-        print('   Time since last tap: ${now.difference(_lastTapTime!).inMilliseconds}ms');
         return;
       }
       
       // Prevent tapping while panel is already opening
       if (_isOpeningPanel) {
-        print('⚠️  [Flutter] Panel is already opening - please wait...');
         return;
       }
       
       _lastTapTime = now;
       
-      print('');
-      print('═══════════════════════════════════════════════════════════');
-      print('🔵 [Flutter] Device card TAPPED!');
-      print('   Device ID: ${widget.device.deviceId}');
-      print('   Device Name: ${widget.device.name}');
-      print('   Home ID: ${widget.homeId}');
-      print('   Home Name: ${widget.homeName ?? 'Home'}');
-      print('   Channel: ${_channel.name}');
-      print('═══════════════════════════════════════════════════════════');
-      print('');
       _openDeviceControlPanel();
   }
 
@@ -279,25 +266,14 @@ class _DeviceCardState extends State<DeviceCard> {
     });
     
     try {
-      print('🚀 [Flutter] Calling platform method: openDeviceControlPanel');
-      print('   Arguments:');
-      print('     - deviceId: ${widget.device.deviceId}');
-      print('     - homeId: ${widget.homeId}');
-      print('     - homeName: ${widget.homeName ?? 'Home'}');
-      print('');
-      print('⏳ [Flutter] Please wait - panel resources are downloading...');
-      print('   This may take 10-30 seconds on first load');
-      print('');
-      
-      final result = await _channel.invokeMethod('openDeviceControlPanel', {
+
+      await _channel.invokeMethod('openDeviceControlPanel', {
         'deviceId': widget.device.deviceId,
         'homeId': widget.homeId,
         'homeName': widget.homeName ?? 'Home',
       });
       
-      print('✅ [Flutter] Platform method call completed successfully!');
-      print('   Result: $result');
-      
+
       // Reset loading state after a delay (panel Activity takes over)
       await Future.delayed(const Duration(milliseconds: 1000));
       if (mounted) {
@@ -311,16 +287,6 @@ class _DeviceCardState extends State<DeviceCard> {
           _isOpeningPanel = false;
         });
       }
-      
-      print('');
-      print('❌❌❌ [Flutter] PlatformException ❌❌❌');
-      print("   Message: '${e.message}'");
-      print("   Code: ${e.code}");
-      print("   Details: ${e.details}");
-      debugPrint("   Stack trace: ${e.stacktrace}");
-      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
-      print('');
-      
       // Show error to user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -338,12 +304,6 @@ class _DeviceCardState extends State<DeviceCard> {
         });
       }
       
-      print('');
-      print('❌❌❌ [Flutter] MissingPluginException ❌❌❌');
-      print('   MethodChannel handler NOT registered!');
-      print('   Exception: $e');
-      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
-      print('');
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -351,12 +311,6 @@ class _DeviceCardState extends State<DeviceCard> {
         });
       }
       
-      print('');
-      print('❌❌❌ [Flutter] Unexpected Error ❌❌❌');
-      print('   Error: $e');
-      print('   Type: ${e.runtimeType}');
-      print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
-      print('');
     }
   }
 }

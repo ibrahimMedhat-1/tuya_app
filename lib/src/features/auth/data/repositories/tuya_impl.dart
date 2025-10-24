@@ -21,6 +21,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, User>> register(String email, String password, String verificationCode) async {
+    return await _dataSource.register(email, password, verificationCode);
+  }
+
+  @override
+  Future<Either<Failure, String>> sendVerificationCode(String email) async {
+    return await _dataSource.sendVerificationCode(email);
+  }
+
+  @override
   Future<Either<Failure, void>> logout() async {
     return await _dataSource.logout();
   }
