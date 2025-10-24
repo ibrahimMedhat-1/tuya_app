@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "tuya_app",
+            "request": "launch",
+            "type": "dart"
+        , 
+        "flutterMode": "debug",
+        "deviceId": "R5CR31RZAYR"
+        },
+        {
+            "name": "tuya_app (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "tuya_app (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

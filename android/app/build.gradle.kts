@@ -53,7 +53,6 @@ android {
             pickFirsts += "lib/*/libopenh264.so"
             pickFirsts += "lib/*/libv8wrapper.so"
             pickFirsts += "lib/*/libv8android.so"
-            // Fix SQLCipher library conflicts
             pickFirsts += "lib/*/libsqlcipher.so"
             pickFirsts += "lib/*/libwcdb.so"
         }
@@ -61,7 +60,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("/Users/rebuy/Downloads/sha256.jks")
+            storeFile = file("/Users/ibrahim/StudioProjects/tuya_app/android/app/sha 256.jks")
             storePassword = "abdo_Iot808"
             keyAlias = "key0"
             keyPassword = "abdo_Iot808"

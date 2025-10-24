@@ -3,6 +3,7 @@ import 'package:tuya_app/src/core/utils/either.dart';
 
 import '../entities/device.dart';
 import '../entities/home.dart';
+import '../entities/room.dart';
 import '../repositories/home_repository.dart';
 
 class GetUserHomesUseCase {
@@ -10,7 +11,8 @@ class GetUserHomesUseCase {
 
   GetUserHomesUseCase(this._repository);
 
-  Future<Either<Failure, List<HomeEntity>>> call() => _repository.getUserHomes();
+  Future<Either<Failure, List<HomeEntity>>> call() =>
+      _repository.getUserHomes();
 }
 
 class GetHomeDevicesUseCase {
@@ -18,8 +20,60 @@ class GetHomeDevicesUseCase {
 
   GetHomeDevicesUseCase(this._repository);
 
-  Future<Either<Failure, List<DeviceEntity>>> call(int homeId, {String? homeName}) =>
-      _repository.getHomeDevices(homeId, homeName: homeName);
+  Future<Either<Failure, List<DeviceEntity>>> call(
+    int homeId, {
+    String? homeName,
+  }) => _repository.getHomeDevices(homeId, homeName: homeName);
+}
+
+class GetHomeRoomsUseCase {
+  final HomeRepository _repository;
+
+  GetHomeRoomsUseCase(this._repository);
+
+  Future<Either<Failure, List<RoomEntity>>> call(int homeId) =>
+      _repository.getHomeRooms(homeId);
+}
+
+class GetRoomDevicesUseCase {
+  final HomeRepository _repository;
+
+  GetRoomDevicesUseCase(this._repository);
+
+  Future<Either<Failure, List<DeviceEntity>>> call(int homeId, int roomId) =>
+      _repository.getRoomDevices(homeId, roomId);
+}
+
+class AddHouseUseCase {
+  final HomeRepository _repository;
+
+  AddHouseUseCase(this._repository);
+
+  Future<Either<Failure, HomeEntity>> call({
+    required String name,
+    String? geoName,
+    double? lon,
+    double? lat,
+    List<String>? roomNames,
+  }) => _repository.addHouse(
+    name: name,
+    geoName: geoName,
+    lon: lon,
+    lat: lat,
+    roomNames: roomNames,
+  );
+}
+
+class AddRoomUseCase {
+  final HomeRepository _repository;
+
+  AddRoomUseCase(this._repository);
+
+  Future<Either<Failure, RoomEntity>> call({
+    required int homeId,
+    required String name,
+    String? iconUrl,
+  }) => _repository.addRoom(homeId: homeId, name: name, iconUrl: iconUrl);
 }
 
 class ControlDeviceUseCase {
@@ -30,8 +84,7 @@ class ControlDeviceUseCase {
   Future<Either<Failure, void>> call({
     required String deviceId,
     required Map<String, Object> dps,
-  }) =>
-      _repository.controlDevice(deviceId: deviceId, dps: dps);
+  }) => _repository.controlDevice(deviceId: deviceId, dps: dps);
 }
 
 class PairDeviceUseCase {
@@ -41,4 +94,3 @@ class PairDeviceUseCase {
 
   Future<Either<Failure, void>> call() => _repository.pairDevices();
 }
-

@@ -23,8 +23,10 @@ import com.thingclips.smart.commonbiz.bizbundle.family.api.AbsBizBundleFamilySer
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.panelcaller.api.AbsPanelCallerService
 import com.thingclips.smart.home.sdk.bean.HomeBean
+import com.thingclips.smart.home.sdk.bean.RoomBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
+import com.thingclips.smart.home.sdk.callback.IThingRoomResultCallback
 import com.thingclips.smart.sdk.api.IResultCallback
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -125,6 +127,49 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
+                "getHomeRooms" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    if (homeId != null) {
+                        getHomeRooms(homeId.toLong(), result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId is required", null)
+                    }
+                }
+
+                "getRoomDevices" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val roomId = call.argument<Int>("roomId")
+                    if (homeId != null && roomId != null) {
+                        getRoomDevices(homeId.toLong(), roomId.toLong(), result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId and roomId are required", null)
+                    }
+                }
+
+                "addHouse" -> {
+                    val name = call.argument<String>("name")
+                    val geoName = call.argument<String>("geoName")
+                    val lon = call.argument<Double>("lon")
+                    val lat = call.argument<Double>("lat")
+                    val roomNames = call.argument<List<String>>("roomNames")?: emptyList<String>()
+                    if (name != null) {
+                        addHouse(name, geoName, lon, lat, roomNames, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "name is required", null)
+                    }
+                }
+
+                "addRoom" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val name = call.argument<String>("name")
+                    val iconUrl = call.argument<String>("iconUrl")
+                    if (homeId != null && name != null) {
+                        addRoom(homeId.toLong(), name, iconUrl, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId and name are required", null)
+                    }
+                }
+
                 else -> result.notImplemented()
             }
         }
@@ -191,6 +236,174 @@ class MainActivity : FlutterActivity() {
                 result.error("GET_HOME_DEVICES_FAILED", error ?: "Failed to get home devices", null)
             }
         })
+    }
+
+    private fun getHomeRooms(homeId: Long, result: MethodChannel.Result) {
+        ThingHomeSdk.newHomeInstance(homeId).getHomeDetail(object : IThingHomeResultCallback {
+            override fun onSuccess(homeBean: HomeBean?) {
+                val rooms = homeBean?.rooms?.map { room ->
+                    mapOf(
+                        "roomId" to room.roomId,
+                        "name" to (room.name ?: "Unnamed Room"),
+                        "deviceCount" to (room.deviceList?.size ?: 0),
+                        "icon" to room.iconUrl
+                    )
+                } ?: emptyList()
+
+                Log.d("TuyaSDK", "Rooms: $rooms")
+                result.success(rooms)
+            }
+
+            override fun onError(code: String?, error: String?) {
+                result.error("GET_HOME_ROOMS_FAILED", error ?: "Failed to get home rooms", null)
+            }
+        })
+    }
+
+    private fun getRoomDevices(homeId: Long, roomId: Long, result: MethodChannel.Result) {
+        ThingHomeSdk.newHomeInstance(homeId).getHomeDetail(object : IThingHomeResultCallback {
+            override fun onSuccess(homeBean: HomeBean?) {
+                // Find the specific room
+                val room = homeBean?.rooms?.find { it.roomId == roomId }
+                val devices = room?.deviceList?.map { device ->
+                    mapOf(
+                        "deviceId" to (device.devId ?: ""),
+                        "name" to (device.name ?: "no name"),
+                        "isOnline" to device.isOnline,
+                        "image" to device.iconUrl
+                    )
+                } ?: emptyList()
+
+                Log.d("TuyaSDK", "Room devices: $devices")
+                result.success(devices)
+            }
+
+            override fun onError(code: String?, error: String?) {
+                result.error("GET_ROOM_DEVICES_FAILED", error ?: "Failed to get room devices", null)
+            }
+        })
+    }
+
+    private fun addHouse(name: String, geoName: String?, lon: Double?, lat: Double?, roomNames: List<String>, result: MethodChannel.Result) {
+        try {
+            Log.d("TuyaSDK", "Adding new house: $name")
+            
+            // Create home bean with required fields
+            val homeBean = HomeBean().apply {
+                this.name = name
+                this.geoName = geoName ?: ""
+                this.lon = lon ?: 0.0
+                this.lat = lat ?: 0.0
+            }
+            
+            ThingHomeSdk.getHomeManagerInstance().createHome(
+                homeBean.name,
+              homeBean.  lon,
+           homeBean.     lat,
+                geoName,
+                roomNames,
+                object : IThingHomeResultCallback {
+                    override fun onSuccess(homeBean: HomeBean?) {
+                        Log.d("TuyaSDK", "House created successfully: ${homeBean?.name}")
+                        
+                            val homeData = mapOf(
+                                "homeId" to (homeBean?.homeId ?: 0),
+                                "name" to (homeBean?.name ?: name)
+                            )
+                            result.success(homeData)
+                    }
+
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "Failed to create house: $error")
+                        result.error("ADD_HOUSE_FAILED", error ?: "Failed to create house", null)
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Exception while creating house: ${e.message}", e)
+            result.error("ADD_HOUSE_EXCEPTION", "Exception while creating house: ${e.message}", null)
+        }
+    }
+
+    private fun createRoomsForHome(homeId: Long, roomNames: List<String>, result: MethodChannel.Result) {
+        var completedRooms = 0
+        val totalRooms = roomNames.size
+        val createdRooms = mutableListOf<Map<String, Any>>()
+        
+        roomNames.forEach { roomName ->
+            ThingHomeSdk.newHomeInstance(homeId).addRoom(
+                roomName,
+                object : IThingRoomResultCallback {
+                    override fun onSuccess(newRoom: RoomBean?) {
+                        Log.d("TuyaSDK", "Room created successfully: $roomName")
+                        newRoom?.let { room ->
+                            createdRooms.add(mapOf(
+                                "roomId" to room.roomId,
+                                "name" to room.name,
+                                "deviceCount" to (room.deviceList?.size ?: 0),
+                                "icon" to (room.iconUrl ?: "")
+                            ))
+                        }
+                        
+                        completedRooms++
+                        if (completedRooms == totalRooms) {
+                            // All rooms created, return success
+                            val homeData = mapOf(
+                                "homeId" to homeId,
+                                "name" to "New Home", // You might want to get the actual home name
+                                "rooms" to createdRooms
+                            )
+                            result.success(homeData)
+                        }
+                    }
+
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "Failed to create room $roomName: $error")
+                        completedRooms++
+                        if (completedRooms == totalRooms) {
+                            // Even if some rooms failed, return the home data
+                            val homeData = mapOf(
+                                "homeId" to homeId,
+                                "name" to "New Home",
+                                "rooms" to createdRooms
+                            )
+                            result.success(homeData)
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    private fun addRoom(homeId: Long, name: String, iconUrl: String?, result: MethodChannel.Result) {
+        try {
+            Log.d("TuyaSDK", "Adding new room: $name to home: $homeId")
+            
+            ThingHomeSdk.newHomeInstance(homeId).addRoom(
+                name,
+                object : IThingRoomResultCallback {
+                    override fun onSuccess(newRoom: RoomBean?) {
+                        Log.d("TuyaSDK", "Room created successfully: $name")
+                        // Find the newly created room
+                        val roomData = mapOf(
+                            "roomId" to (newRoom?.roomId ?: 0),
+                            "name" to (newRoom?.name ?: name),
+                            "deviceCount" to (newRoom?.deviceList?.size ?: 0),
+                            "icon" to (newRoom?.iconUrl ?: "")
+                        )
+                        result.success(roomData)
+                    }
+
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "Failed to create room: $error")
+                        result.error("ADD_ROOM_FAILED", error ?: "Failed to create room", null)
+                    }
+                }
+            )
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Exception while creating room: ${e.message}", e)
+            result.error("ADD_ROOM_EXCEPTION", "Exception while creating room: ${e.message}", null)
+        }
     }
 
 
@@ -286,10 +499,10 @@ class MainActivity : FlutterActivity() {
         
         try {
             ThingHomeSdk.getUserInstance().registerAccountWithEmail(
+                "US",
                 email,
                 password,
                 verificationCode,
-                "US", // Country code
                 object : IRegisterCallback {
                     override fun onSuccess(user: User?) {
                         Log.d("TuyaSDK", "User registered successfully: ${user?.email}")

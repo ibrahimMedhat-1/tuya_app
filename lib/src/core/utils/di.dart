@@ -30,6 +30,18 @@ Future<void> getItInit() async {
   sl.registerLazySingleton<GetHomeDevicesUseCase>(
     () => GetHomeDevicesUseCase(sl<HomeRepository>()),
   );
+  sl.registerLazySingleton<GetHomeRoomsUseCase>(
+    () => GetHomeRoomsUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<GetRoomDevicesUseCase>(
+    () => GetRoomDevicesUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<AddHouseUseCase>(
+    () => AddHouseUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<AddRoomUseCase>(
+    () => AddRoomUseCase(sl<HomeRepository>()),
+  );
   sl.registerLazySingleton<ControlDeviceUseCase>(
     () => ControlDeviceUseCase(sl<HomeRepository>()),
   );
@@ -40,9 +52,12 @@ Future<void> getItInit() async {
     () => HomeCubit(
       sl<GetUserHomesUseCase>(),
       sl<GetHomeDevicesUseCase>(),
+      sl<GetHomeRoomsUseCase>(),
+      sl<GetRoomDevicesUseCase>(),
+      sl<AddHouseUseCase>(),
+      sl<AddRoomUseCase>(),
       sl<ControlDeviceUseCase>(),
       sl<PairDeviceUseCase>(),
     ),
   );
-
 }
