@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
+import 'package:tuya_app/src/features/auth/presentation/view/screens/me_screen.dart';
 import 'package:tuya_app/src/features/home/domain/entities/home.dart';
 import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
 import 'package:tuya_app/src/features/home/presentation/view/widgets/device_card.dart';
@@ -16,6 +17,12 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: BlocBuilder<HomeCubit, HomeState>(
         builder: (context, state) {
+          // Handle different tabs based on selectedBottomNavIndex
+          if (state.selectedBottomNavIndex == 4) {
+            // Me tab
+            return const MeScreen();
+          }
+
           if (state.status == HomeStatus.loading && state.homes.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -584,46 +591,74 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
-    final navHeight = context.isMobile
-        ? 80.0
-        : context.isTablet
-        ? 90.0
-        : 100.0;
-    final centerButtonSize = context.isMobile
-        ? 60.0
-        : context.isTablet
-        ? 70.0
-        : 80.0;
+    return BlocBuilder<HomeCubit, HomeState>(
+      builder: (context, state) {
+        final navHeight = context.isMobile
+            ? 80.0
+            : context.isTablet
+            ? 90.0
+            : 100.0;
+        final centerButtonSize = context.isMobile
+            ? 60.0
+            : context.isTablet
+            ? 70.0
+            : 80.0;
 
-    return Container(
-      height: navHeight,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade300,
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+        return Container(
+          height: navHeight,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade300,
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(context, Icons.home, 'Home', true),
-          _buildNavItem(context, Icons.favorite, 'Favorites', false),
-          _buildNavItem(
-            context,
-            Icons.graphic_eq,
-            '',
-            false,
-            isCenter: true,
-            centerButtonSize: centerButtonSize,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                context,
+                Icons.home,
+                'Home',
+                state.selectedBottomNavIndex == 0,
+                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(0),
+              ),
+              _buildNavItem(
+                context,
+                Icons.favorite,
+                'Favorites',
+                state.selectedBottomNavIndex == 1,
+                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(1),
+              ),
+              _buildNavItem(
+                context,
+                Icons.graphic_eq,
+                '',
+                false,
+                isCenter: true,
+                centerButtonSize: centerButtonSize,
+              ),
+              _buildNavItem(
+                context,
+                Icons.grid_view,
+                'Scene',
+                state.selectedBottomNavIndex == 3,
+                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(3),
+              ),
+              _buildNavItem(
+                context,
+                Icons.person,
+                'Me',
+                state.selectedBottomNavIndex == 4,
+                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(4),
+              ),
+            ],
           ),
-          _buildNavItem(context, Icons.grid_view, 'Scene', false),
-          _buildNavItem(context, Icons.person, 'Me', false),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -634,6 +669,7 @@ class HomeScreen extends StatelessWidget {
     bool isSelected, {
     bool isCenter = false,
     double? centerButtonSize,
+    VoidCallback? onTap,
   }) {
     if (isCenter) {
       final size =
@@ -671,24 +707,27 @@ class HomeScreen extends StatelessWidget {
         ? 14.0
         : 16.0;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? Colors.green : Colors.grey,
-          size: iconSize,
-        ),
-        4.height,
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: fontSize,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
             color: isSelected ? Colors.green : Colors.grey,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            size: iconSize,
           ),
-        ),
-      ],
+          4.height,
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: fontSize,
+              color: isSelected ? Colors.green : Colors.grey,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

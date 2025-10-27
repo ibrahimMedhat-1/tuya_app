@@ -255,4 +255,8 @@ class HomeCubit extends Cubit<HomeState> {
       },
     );
   }
+
+  void selectBottomNavIndex(int index) {
+    emit(state.copyWith(selectedBottomNavIndex: index));
+  }
 }

@@ -18,6 +18,7 @@ class HomeState {
   final int? selectedHomeId;
   final int? selectedRoomId;
   final String? errorMessage;
+  final int selectedBottomNavIndex;
 
   const HomeState({
     required this.status,
@@ -27,6 +28,7 @@ class HomeState {
     required this.selectedHomeId,
     required this.selectedRoomId,
     required this.errorMessage,
+    required this.selectedBottomNavIndex,
   });
 
   factory HomeState.initial() => const HomeState(
@@ -37,6 +39,7 @@ class HomeState {
     selectedHomeId: null,
     selectedRoomId: null,
     errorMessage: null,
+    selectedBottomNavIndex: 0,
   );
 
   HomeState copyWith({
@@ -47,6 +50,7 @@ class HomeState {
     int? selectedHomeId,
     int? selectedRoomId,
     String? errorMessage,
+    int? selectedBottomNavIndex,
   }) {
     return HomeState(
       status: status ?? this.status,
@@ -56,6 +60,8 @@ class HomeState {
       selectedHomeId: selectedHomeId ?? this.selectedHomeId,
       selectedRoomId: selectedRoomId ?? this.selectedRoomId,
       errorMessage: errorMessage ?? this.errorMessage,
+      selectedBottomNavIndex:
+          selectedBottomNavIndex ?? this.selectedBottomNavIndex,
     );
   }
 
@@ -67,5 +73,6 @@ class HomeState {
     selectedHomeId,
     selectedRoomId,
     errorMessage,
+    selectedBottomNavIndex,
   ];
 }
