@@ -27,7 +27,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <application
-        android:label="Zero Code"
+        android:label="ZeroTech"
         tools:replace="android:label"
         android:name=".TuyaSmartApplication"
         android:icon="@mipmap/ic_launcher"
