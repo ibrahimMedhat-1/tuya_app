@@ -25,11 +25,7 @@ class MeScreen extends StatelessWidget {
   Widget _buildMeScreen(BuildContext context, user) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBar(backgroundColor: Colors.white, elevation: 0, automaticallyImplyLeading: false),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -55,15 +51,8 @@ class MeScreen extends StatelessWidget {
         Container(
           width: context.isMobile ? 80 : 100,
           height: context.isMobile ? 80 : 100,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.person,
-            size: context.isMobile ? 40 : 50,
-            color: Colors.grey.shade600,
-          ),
+          decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle),
+          child: Icon(Icons.person, size: context.isMobile ? 40 : 50, color: Colors.grey.shade600),
         ),
 
         16.height,
@@ -71,11 +60,7 @@ class MeScreen extends StatelessWidget {
         // Name
         Text(
           user.name ?? 'User',
-          style: TextStyle(
-            fontSize: context.isMobile ? 20 : 24,
-            fontWeight: FontWeight.w600,
-            color: Colors.green,
-          ),
+          style: TextStyle(fontSize: context.isMobile ? 20 : 24, fontWeight: FontWeight.w600, color: Colors.green),
         ),
 
         8.height,
@@ -83,10 +68,7 @@ class MeScreen extends StatelessWidget {
         // Email
         Text(
           user.email ?? 'user@example.com',
-          style: TextStyle(
-            fontSize: context.isMobile ? 14 : 16,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: context.isMobile ? 14 : 16, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -94,11 +76,7 @@ class MeScreen extends StatelessWidget {
 
   Widget _buildMenuSection(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: context.isMobile
-            ? 20
-            : context.responsivePadding.horizontal,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: context.isMobile ? 20 : context.responsivePadding.horizontal),
       child: Column(
         children: [
           _buildMenuItem(
@@ -141,13 +119,7 @@ class MeScreen extends StatelessWidget {
           ),
           _buildDivider(),
 
-          _buildMenuItem(
-            context,
-            icon: Icons.logout,
-            title: 'Logout',
-            onTap: () => _showLogoutDialog(context),
-            isLogout: true,
-          ),
+          _buildMenuItem(context, icon: Icons.logout, title: 'Logout', onTap: () => _showLogoutDialog(context), isLogout: true),
         ],
       ),
     );
@@ -166,11 +138,7 @@ class MeScreen extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: context.isMobile ? 16 : 20),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: context.isMobile ? 24 : 28,
-              color: isLogout ? Colors.red : Colors.grey.shade700,
-            ),
+            Icon(icon, size: context.isMobile ? 24 : 28, color: isLogout ? Colors.red : Colors.grey.shade700),
 
             16.width,
 
@@ -185,11 +153,7 @@ class MeScreen extends StatelessWidget {
               ),
             ),
 
-            Icon(
-              Icons.chevron_right,
-              size: context.isMobile ? 24 : 28,
-              color: Colors.grey.shade400,
-            ),
+            Icon(Icons.chevron_right, size: context.isMobile ? 24 : 28, color: Colors.grey.shade400),
           ],
         ),
       ),
@@ -205,29 +169,18 @@ class MeScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             'Logout',
-            style: TextStyle(
-              fontSize: context.responsiveFontMultiplier * 20,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: context.responsiveFontMultiplier * 20, fontWeight: FontWeight.w600),
           ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(fontSize: context.responsiveFontMultiplier * 16),
-          ),
+          content: Text('Are you sure you want to logout?', style: TextStyle(fontSize: context.responsiveFontMultiplier * 16)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
                 'Cancel',
-                style: TextStyle(
-                  fontSize: context.responsiveFontMultiplier * 16,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: context.responsiveFontMultiplier * 16, color: Colors.grey.shade600),
               ),
             ),
             TextButton(
@@ -237,11 +190,7 @@ class MeScreen extends StatelessWidget {
               },
               child: Text(
                 'Logout',
-                style: TextStyle(
-                  fontSize: context.responsiveFontMultiplier * 16,
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: context.responsiveFontMultiplier * 16, color: Colors.red, fontWeight: FontWeight.w600),
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
+import 'package:tuya_app/src/core/widgets/nav_icons_icons.dart';
 import 'package:tuya_app/src/features/auth/presentation/view/screens/me_screen.dart';
 import 'package:tuya_app/src/features/home/domain/entities/home.dart';
 import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
@@ -54,92 +55,108 @@ class HomeScreen extends StatelessWidget {
           }
 
           return SafeArea(
-            child: Column(
-              children: [
-                // Header Section
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: context.responsivePadding.horizontal,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Logo Section
-                      _buildLogoSection(context),
-                      24.height,
-
-                      // Greeting Section
-                      _buildGreetingSection(context, state),
-                      24.height,
-
-                      // Home Selector
-                      _buildHomeSelector(context, state),
-                      24.height,
-
-                      // Rooms Section
-                      if (state.rooms.isNotEmpty) ...[
-                        _buildRoomsSection(context, state),
+            child: CustomScrollView(
+              slivers: [
+                // Header Section (logo + greeting)
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: context.responsivePadding.horizontal,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLogoSection(context),
                         24.height,
-                      ] else if (state.selectedHomeId != null &&
-                          state.status == HomeStatus.loading) ...[
-                        // Loading rooms state
-                        Container(
-                          height: context.isMobile
-                              ? 80
-                              : context.isTablet
-                              ? 90
-                              : 100,
-                          padding: EdgeInsets.symmetric(
-                            horizontal:
-                                context.responsivePadding.horizontal / 2,
-                          ),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                      ] else if (state.selectedHomeId != null &&
-                          state.status != HomeStatus.loading) ...[
-                        // Empty rooms state
-                        Container(
-                          padding: EdgeInsets.all(context.isMobile ? 32 : 48),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.room_outlined,
-                                size: context.isMobile ? 48 : 64,
-                                color: Colors.grey.shade400,
-                              ),
-                              (context.isMobile ? 16 : 20).height,
-                              Text(
-                                'No rooms found',
-                                style: TextStyle(
-                                  fontSize:
-                                      16 * context.responsiveFontMultiplier,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              (context.isMobile ? 8 : 12).height,
-                              Text(
-                                'Add rooms to organize your devices',
-                                style: TextStyle(
-                                  fontSize:
-                                      14 * context.responsiveFontMultiplier,
-                                  color: Colors.grey.shade500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildGreetingSection(context, state),
                       ],
-                    ],
+                    ),
                   ),
                 ),
 
-                // Devices Section
-                Expanded(child: _buildDevicesSection(context, state)),
+                // Pinned Home Selector
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _PinnedHeaderDelegate(
+                    minExtentHeight: context.isMobile ? 64 : 76,
+                    maxExtentHeight: context.isMobile ? 72 : 84,
+                    child: Container(
+                      color: Colors.white,
+                      padding: EdgeInsets.only(
+                        top: 8,
+                        bottom: 8,
+                        left: context.responsivePadding.horizontal / 2,
+                        right: context.responsivePadding.horizontal / 2,
+                      ),
+                      child: _buildHomeSelector(context, state),
+                    ),
+                  ),
+                ),
+
+                // Rooms Section / placeholders
+                if (state.rooms.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.responsivePadding.horizontal,
+                        vertical: 12,
+                      ),
+                      child: _buildRoomsSection(context, state),
+                    ),
+                  )
+                else if (state.selectedHomeId != null &&
+                    state.status == HomeStatus.loading)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      height: context.isMobile
+                          ? 80
+                          : context.isTablet
+                          ? 90
+                          : 100,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.responsivePadding.horizontal / 2,
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  )
+                else if (state.selectedHomeId != null &&
+                    state.status != HomeStatus.loading)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(context.isMobile ? 32 : 48),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.room_outlined,
+                            size: context.isMobile ? 48 : 64,
+                            color: Colors.grey.shade400,
+                          ),
+                          (context.isMobile ? 16 : 20).height,
+                          Text(
+                            'No rooms found',
+                            style: TextStyle(
+                              fontSize: 16 * context.responsiveFontMultiplier,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          (context.isMobile ? 8 : 12).height,
+                          Text(
+                            'Add rooms to organize your devices',
+                            style: TextStyle(
+                              fontSize: 14 * context.responsiveFontMultiplier,
+                              color: Colors.grey.shade500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Devices Section as slivers
+                ..._buildDevicesSlivers(context, state),
               ],
             ),
           );
@@ -150,44 +167,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildLogoSection(BuildContext context) {
-    final logoSize = context.isMobile
-        ? 40.0
-        : context.isTablet
-        ? 45.0
-        : 50.0;
-    final iconSize = context.isMobile
-        ? 24.0
-        : context.isTablet
-        ? 28.0
-        : 32.0;
-    final fontSize = context.isMobile
-        ? 24.0
-        : context.isTablet
-        ? 28.0
-        : 32.0;
-
-    return Row(
-      children: [
-        Container(
-          width: logoSize,
-          height: logoSize,
-          decoration: BoxDecoration(
-            color: Colors.green,
-            borderRadius: BorderRadius.circular(logoSize / 2),
-          ),
-          child: Icon(Icons.power, color: Colors.white, size: iconSize),
-        ),
-        (context.isMobile ? 12 : 16).width,
-        Text(
-          'ZERO TECH',
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ],
-    );
+    return Image.asset('assets/images/logo.png');
   }
 
   Widget _buildGreetingSection(BuildContext context, HomeState state) {
@@ -304,53 +284,8 @@ class HomeScreen extends StatelessWidget {
           height: roomHeight,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: state.rooms.length + 1, // +1 for add room button
+            itemCount: state.rooms.length,
             itemBuilder: (context, index) {
-              if (index == state.rooms.length) {
-                // Add room button
-                return Container(
-                  width: 80,
-                  margin: const EdgeInsets.only(right: 16),
-                  child: GestureDetector(
-                    onTap: () {
-                      if (state.selectedHomeId != null) {
-                        _showAddRoomDialog(context, state.selectedHomeId!);
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                          style: BorderStyle.solid,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add,
-                            color: Colors.grey.shade600,
-                            size: 24,
-                          ),
-                          8.height,
-                          Text(
-                            'Add Room',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-
               final room = state.rooms[index];
               return RoomCard(
                 room: room,
@@ -369,225 +304,126 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDevicesSection(BuildContext context, HomeState state) {
-    if (state.status == HomeStatus.devicesLoaded && state.devices.isNotEmpty) {
-      return Column(
-        children: [
-          // Device view toggle
-          if (state.selectedHomeId != null && state.rooms.isNotEmpty)
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: context.responsivePadding.horizontal / 2,
-                vertical: 8,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        if (state.selectedRoomId != null) {
-                          // Show all home devices
-                          context.read<HomeCubit>().loadAllHomeDevices(
-                            state.selectedHomeId!,
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: state.selectedRoomId == null
-                              ? Colors.green
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'All Devices',
-                          style: TextStyle(
-                            color: state.selectedRoomId == null
-                                ? Colors.white
-                                : Colors.grey.shade600,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14 * context.responsiveFontMultiplier,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                  8.width,
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        if (state.selectedRoomId == null &&
-                            state.rooms.isNotEmpty) {
-                          // Show room devices (select first room)
-                          context.read<HomeCubit>().selectRoom(
-                            state.selectedHomeId!,
-                            state.rooms.first.roomId,
-                          );
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: state.selectedRoomId != null
-                              ? Colors.green
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Room Devices',
-                          style: TextStyle(
-                            color: state.selectedRoomId != null
-                                ? Colors.white
-                                : Colors.grey.shade600,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14 * context.responsiveFontMultiplier,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+  List<Widget> _buildDevicesSlivers(BuildContext context, HomeState state) {
+    final slivers = <Widget>[];
+
+    // Toggle header (All devices / Room devices)
+    if (state.selectedHomeId != null && state.rooms.isNotEmpty) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.responsivePadding.horizontal / 2,
+              vertical: 8,
             ),
-          // Devices grid
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: context.responsivePadding.horizontal / 2,
-              ),
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: context.isMobile
-                      ? 2
-                      : context.isTablet
-                      ? 3
-                      : 4,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 0.75,
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      await context.read<HomeCubit>().loadAllHomeDevices(
+                        state.selectedHomeId!,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: state.selectedRoomId == null
+                            ? Colors.green
+                            : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'All Devices',
+                        style: TextStyle(
+                          color: state.selectedRoomId == null
+                              ? Colors.white
+                              : Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14 * context.responsiveFontMultiplier,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
                 ),
-                itemCount: state.devices.length,
-                itemBuilder: (context, index) {
-                  final device = state.devices[index];
-                  final selectedHome = state.homes.firstWhere(
-                    (home) => home.homeId == state.selectedHomeId,
-                    orElse: () => state.homes.first,
-                  );
-                  return DeviceCard(
-                    device: device,
-                    homeId: state.selectedHomeId,
-                    homeName: selectedHome.name,
-                  );
-                },
-              ),
+                8.width,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      if (state.selectedRoomId == null &&
+                          state.rooms.isNotEmpty) {
+                        context.read<HomeCubit>().selectRoom(
+                          state.selectedHomeId!,
+                          state.rooms.first.roomId,
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: state.selectedRoomId != null
+                            ? Colors.green
+                            : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Room Devices',
+                        style: TextStyle(
+                          color: state.selectedRoomId != null
+                              ? Colors.white
+                              : Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14 * context.responsiveFontMultiplier,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      );
-    } else if (state.selectedHomeId != null && state.selectedRoomId == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.room_outlined,
-              size: context.isMobile
-                  ? 48
-                  : context.isTablet
-                  ? 56
-                  : 64,
-              color: Colors.grey.shade400,
-            ),
-            (context.isMobile ? 16 : 20).height,
-            Text(
-              'Select a room to view devices',
-              style: TextStyle(
-                fontSize: 16 * context.responsiveFontMultiplier,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            (context.isMobile ? 8 : 12).height,
-            Text(
-              'Choose a room from the list above to see its devices',
-              style: TextStyle(
-                fontSize: 14 * context.responsiveFontMultiplier,
-                color: Colors.grey.shade500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    } else if (state.selectedHomeId != null &&
-        state.selectedRoomId != null &&
-        state.devices.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.devices_other_outlined,
-              size: context.isMobile
-                  ? 48
-                  : context.isTablet
-                  ? 56
-                  : 64,
-              color: Colors.grey.shade400,
-            ),
-            (context.isMobile ? 16 : 20).height,
-            Text(
-              'No devices in this room',
-              style: TextStyle(
-                fontSize: 16 * context.responsiveFontMultiplier,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            (context.isMobile ? 8 : 12).height,
-            Text(
-              'This room doesn\'t have any devices yet',
-              style: TextStyle(
-                fontSize: 14 * context.responsiveFontMultiplier,
-                color: Colors.grey.shade500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    } else if (state.selectedHomeId != null &&
-        state.status == HomeStatus.loading) {
-      return const Center(child: CircularProgressIndicator());
-    } else {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.home_outlined,
-              size: context.isMobile
-                  ? 64
-                  : context.isTablet
-                  ? 72
-                  : 80,
-              color: Colors.grey.shade400,
-            ),
-            (context.isMobile ? 16 : 20).height,
-            Text(
-              'Select a home to view devices',
-              style: TextStyle(
-                fontSize: 16 * context.responsiveFontMultiplier,
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ],
         ),
       );
     }
+
+    if (state.status == HomeStatus.devicesLoaded && state.devices.isNotEmpty) {
+      final crossAxisCount = context.isMobile
+          ? 2
+          : context.isTablet
+          ? 3
+          : 4;
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.symmetric(
+            horizontal: context.responsivePadding.horizontal / 2,
+          ),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final device = state.devices[index];
+              final selectedHome = state.homes.firstWhere(
+                (home) => home.homeId == state.selectedHomeId,
+                orElse: () => state.homes.first,
+              );
+              return DeviceCard(
+                device: device,
+                homeId: state.selectedHomeId,
+                homeName: selectedHome.name,
+              );
+            }, childCount: state.devices.length),
+          ),
+        ),
+      );
+    }
+
+    return slivers;
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
@@ -604,61 +440,104 @@ class HomeScreen extends StatelessWidget {
             ? 70.0
             : 80.0;
 
-        return Container(
-          height: navHeight,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.shade300,
-                blurRadius: 10,
-                offset: const Offset(0, -2),
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              height: navHeight,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.shade300,
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                context,
-                Icons.home,
-                'Home',
-                state.selectedBottomNavIndex == 0,
-                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    context,
+                    NavIcons.home_wifi_angle_svgrepo_com_2,
+                    'Home',
+                    state.selectedBottomNavIndex == 0,
+                    onTap: () =>
+                        context.read<HomeCubit>().selectBottomNavIndex(0),
+                  ),
+                  _buildNavItem(
+                    context,
+                    NavIcons.favorite_svgrepo_com,
+                    'Favorites',
+                    state.selectedBottomNavIndex == 1,
+                    onTap: () =>
+                        context.read<HomeCubit>().selectBottomNavIndex(1),
+                  ),
+                  // Empty space for center button
+                  SizedBox(width: centerButtonSize),
+                  _buildNavItem(
+                    context,
+                    NavIcons.setting_3_svgrepo_com,
+                    'Scene',
+                    state.selectedBottomNavIndex == 3,
+                    onTap: () =>
+                        context.read<HomeCubit>().selectBottomNavIndex(3),
+                  ),
+                  _buildNavItem(
+                    context,
+                    Icons.person,
+                    'Me',
+                    state.selectedBottomNavIndex == 4,
+                    onTap: () =>
+                        context.read<HomeCubit>().selectBottomNavIndex(4),
+                  ),
+                ],
               ),
-              _buildNavItem(
-                context,
-                Icons.favorite,
-                'Favorites',
-                state.selectedBottomNavIndex == 1,
-                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(1),
+            ),
+            // Center button positioned to protrude upward
+            Positioned(
+              top: -centerButtonSize / 2,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _buildCenterButton(context, centerButtonSize),
               ),
-              _buildNavItem(
-                context,
-                Icons.graphic_eq,
-                '',
-                false,
-                isCenter: true,
-                centerButtonSize: centerButtonSize,
-              ),
-              _buildNavItem(
-                context,
-                Icons.grid_view,
-                'Scene',
-                state.selectedBottomNavIndex == 3,
-                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(3),
-              ),
-              _buildNavItem(
-                context,
-                Icons.person,
-                'Me',
-                state.selectedBottomNavIndex == 4,
-                onTap: () => context.read<HomeCubit>().selectBottomNavIndex(4),
-              ),
-            ],
-          ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildCenterButton(BuildContext context, double size) {
+    final iconSize = context.isMobile
+        ? 24.0
+        : context.isTablet
+        ? 28.0
+        : 32.0;
+
+    return GestureDetector(
+      onTap: () {
+        // Add center button functionality here
+        context.read<HomeCubit>().pairDevices();
+      },
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(size / 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(30),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(Icons.graphic_eq, color: Colors.white, size: iconSize),
+      ),
     );
   }
 
@@ -667,35 +546,8 @@ class HomeScreen extends StatelessWidget {
     IconData icon,
     String label,
     bool isSelected, {
-    bool isCenter = false,
-    double? centerButtonSize,
     VoidCallback? onTap,
   }) {
-    if (isCenter) {
-      final size =
-          centerButtonSize ??
-          (context.isMobile
-              ? 60.0
-              : context.isTablet
-              ? 70.0
-              : 80.0);
-      final iconSize = context.isMobile
-          ? 24.0
-          : context.isTablet
-          ? 28.0
-          : 32.0;
-
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(size / 2),
-        ),
-        child: Icon(icon, color: Colors.white, size: iconSize),
-      );
-    }
-
     final iconSize = context.isMobile
         ? 24.0
         : context.isTablet
@@ -714,7 +566,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: isSelected ? Colors.green : Colors.grey,
+            color: isSelected ? Colors.green : Colors.black,
             size: iconSize,
           ),
           4.height,
@@ -722,7 +574,7 @@ class HomeScreen extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: fontSize,
-              color: isSelected ? Colors.green : Colors.grey,
+              color: isSelected ? Colors.green : Colors.grey.shade600,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -733,49 +585,62 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildHomeSelector(BuildContext context, HomeState state) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: context.responsivePadding.horizontal / 2,
-        vertical: context.isMobile ? 12 : 16,
-      ),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(context.isMobile ? 12 : 16),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          isExpanded: true,
-          value:
-              state.selectedHomeId ??
-              (state.homes.isNotEmpty ? state.homes.first.homeId : null),
-          hint: Text(
-            'Home 1',
-            style: TextStyle(
-              fontSize: 16 * context.responsiveFontMultiplier,
-              fontWeight: FontWeight.w500,
-            ),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(50),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          items: state.homes
-              .map(
-                (HomeEntity h) => DropdownMenuItem<int>(
-                  value: h.homeId,
-                  child: Text(
-                    h.name,
-                    style: TextStyle(
-                      fontSize: 16 * context.responsiveFontMultiplier,
-                      fontWeight: FontWeight.w500,
+        ],
+      ),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: context.responsivePadding.horizontal / 2,
+          vertical: context.isMobile ? 12 : 16,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(context.isMobile ? 12 : 16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<int>(
+            isExpanded: true,
+            value:
+                state.selectedHomeId ??
+                (state.homes.isNotEmpty ? state.homes.first.homeId : null),
+            hint: Text(
+              'Home 1',
+              style: TextStyle(
+                fontSize: 16 * context.responsiveFontMultiplier,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            items: state.homes
+                .map(
+                  (HomeEntity h) => DropdownMenuItem<int>(
+                    value: h.homeId,
+                    child: Text(
+                      h.name,
+                      style: TextStyle(
+                        fontSize: 16 * context.responsiveFontMultiplier,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              context.read<HomeCubit>().loadRooms(value);
-              // Also load all home devices by default
-              context.read<HomeCubit>().loadAllHomeDevices(value);
-            }
-          },
+                )
+                .toList(),
+            onChanged: (value) async {
+              if (value != null) {
+                await context.read<HomeCubit>().loadRooms(value);
+
+                if (context.mounted)
+                  context.read<HomeCubit>().loadAllHomeDevices(value);
+              }
+            },
+          ),
         ),
       ),
     );
@@ -1401,5 +1266,39 @@ class HomeScreen extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minExtentHeight;
+  final double maxExtentHeight;
+  final Widget child;
+
+  _PinnedHeaderDelegate({
+    required this.minExtentHeight,
+    required this.maxExtentHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minExtentHeight;
+
+  @override
+  double get maxExtent => maxExtentHeight;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedHeaderDelegate oldDelegate) {
+    return oldDelegate.minExtentHeight != minExtentHeight ||
+        oldDelegate.maxExtentHeight != maxExtentHeight ||
+        oldDelegate.child != child;
   }
 }

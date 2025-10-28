@@ -10,13 +10,7 @@ class DeviceCard extends StatefulWidget {
   final int? homeId;
   final String? homeName;
 
-  const DeviceCard({
-    super.key,
-    required this.device,
-    this.isLoading = false,
-    this.homeId,
-    this.homeName,
-  });
+  const DeviceCard({super.key, required this.device, this.isLoading = false, this.homeId, this.homeName});
 
   @override
   State<DeviceCard> createState() => _DeviceCardState();
@@ -29,234 +23,122 @@ class _DeviceCardState extends State<DeviceCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: context.isMobile ? 4 : 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(context.isMobile ? 16 : 12),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 10, offset: const Offset(0, 2))],
       ),
-      child: InkWell(
-        onTap: _handleCardTap,
-        borderRadius: BorderRadius.circular(context.isMobile ? 16 : 12),
-        child: Container(
-          padding: context.responsivePadding,
-          constraints: BoxConstraints(
-            minHeight: context.isMobile ? 180 : 160,
-            maxHeight: context.isMobile ? 250 : 230,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: widget.device.isOnline
-                  ? [
-                      Colors.blue.shade50,
-                      Colors.blue.shade100,
-                    ]
-                  : [
-                      Colors.grey.shade50,
-                      Colors.grey.shade100,
-                    ],
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Device Image and Status
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Device Image
-                  Container(
-                    width: context.isMobile ? 60 : 50,
-                    height: context.isMobile ? 60 : 50,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(context.isMobile ? 12 : 10),
-                      border: Border.all(
-                        color: widget.device.isOnline ? Colors.blue.shade200 : Colors.grey.shade300,
-                        width: context.isMobile ? 1.5 : 1,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _handleCardTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: EdgeInsets.all(context.isMobile ? 16 : 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row with Icon and Status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Device Icon
+                    Container(
+                      width: context.isMobile ? 48 : 44,
+                      height: context.isMobile ? 48 : 44,
+                      decoration: BoxDecoration(
+                        color: widget.device.isOnline ? Colors.green.withAlpha(10) : Colors.grey.withAlpha(10),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Image.network(widget.device.image),
+                    ),
+                    // Status Indicator
+                    Container(
+                      width: context.isMobile ? 8 : 6,
+                      height: context.isMobile ? 8 : 6,
+                      decoration: BoxDecoration(
+                        color: widget.device.isOnline ? Colors.green : Colors.red,
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(context.isMobile ? 12 : 10),
-                      child: _buildDeviceImage(context),
-                    ),
-                  ),
-                  _buildStatusIndicator(),
-                ],
-              ),
-
-              12.height,
-
-              // Device Name
-              Text(
-                widget.device.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: context.isMobile ? 16 : 14,
+                  ],
                 ),
-                maxLines: context.isMobile ? 1 : 2,
-                overflow: TextOverflow.ellipsis,
-              ),
 
-              (context.isMobile ? 8 : 6).height,
+                16.height,
 
-              // Device ID
-              Text(
-                'ID: ${widget.device.deviceId}',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: context.isMobile ? 12 : 10,
-                  fontFamily: 'monospace',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              (context.isMobile ? 8 : 6).height,
-
-              // Device Type
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: context.isMobile ? 8 : 6,
-                  vertical: context.isMobile ? 4 : 3,
-                ),
-                decoration: BoxDecoration(
-                  color: widget.device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(context.isMobile ? 8 : 6),
-                ),
-                child: Text(
-                  widget.device.deviceType.toUpperCase(),
+                // Device Name
+                Text(
+                  widget.device.name,
                   style: TextStyle(
-                    color: widget.device.isOnline ? Colors.blue.shade700 : Colors.grey.shade600,
-                    fontSize: context.isMobile ? 10 : 8,
                     fontWeight: FontWeight.w600,
+                    fontSize: context.isMobile ? 16 : 15,
+                    color: Colors.grey.shade800,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
 
-              const Spacer(),
+                8.height,
 
-              // Status Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.device.isOnline ? 'Online' : 'Offline',
+                // Device Type Badge
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: context.isMobile ? 8 : 6, vertical: context.isMobile ? 4 : 3),
+                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                  child: Text(
+                    widget.device.deviceType.toUpperCase(),
                     style: TextStyle(
-                      color: widget.device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
-                      fontWeight: FontWeight.w600,
-                      fontSize: context.isMobile ? 12 : 10,
+                      color: Colors.grey.shade600,
+                      fontSize: context.isMobile ? 10 : 9,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Icon(
-                    widget.device.isOnline ? Icons.wifi : Icons.wifi_off,
-                    size: context.isMobile ? 16 : 14,
-                    color: widget.device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
-                  ),
-                ],
-              ),
-            ],
+                ),
+
+                const Spacer(),
+
+                // Status Row
+                Row(
+                  children: [
+                    Icon(
+                      widget.device.isOnline ? Icons.wifi : Icons.wifi_off,
+                      size: context.isMobile ? 14 : 12,
+                      color: widget.device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
+                    ),
+                    4.width,
+                    Text(
+                      widget.device.isOnline ? 'Online' : 'Offline',
+                      style: TextStyle(
+                        color: widget.device.isOnline ? Colors.green.shade600 : Colors.red.shade600,
+                        fontWeight: FontWeight.w500,
+                        fontSize: context.isMobile ? 12 : 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDeviceImage(BuildContext context) {
-    // If device has an image URL, try to load it
-    if (widget.device.image.isNotEmpty && widget.device.image.startsWith('http')) {
-      return Image.network(
-        widget.device.image,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildFallbackIcon(context);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: Colors.grey.shade100,
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: context.isMobile ? 2 : 1.5,
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-    // Fallback to device type icon
-    return _buildFallbackIcon(context);
-  }
-
-  Widget _buildFallbackIcon(BuildContext context) {
-    return Container(
-      color: widget.device.isOnline ? Colors.blue.shade50 : Colors.grey.shade100,
-      child: Icon(
-        _getDeviceIcon(),
-        size: context.isMobile ? 28 : 24,
-        color: widget.device.isOnline ? Colors.blue.shade600 : Colors.grey.shade600,
-      ),
-    );
-  }
-
-  Widget _buildStatusIndicator() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = context.isMobile ? 8.0 : 6.0;
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: widget.device.isOnline ? Colors.green : Colors.red,
-            shape: BoxShape.circle,
-          ),
-        );
-      },
-    );
-  }
-
-  IconData _getDeviceIcon() {
-    switch (widget.device.deviceType) {
-      case 'light':
-        return Icons.lightbulb_outline;
-      case 'fan':
-        return Icons.air;
-      case 'plug':
-        return Icons.power;
-      case 'camera':
-        return Icons.videocam_outlined;
-      case 'lock':
-        return Icons.lock_outline;
-      case 'sensor':
-        return Icons.sensors;
-      case 'switch':
-        return Icons.toggle_on_outlined;
-      case 'thermostat':
-        return Icons.thermostat;
-      case 'speaker':
-        return Icons.speaker;
-      default:
-        return Icons.device_hub;
-    }
-  }
-
   void _handleCardTap() {
-      // DEBOUNCING: Prevent multiple rapid taps
-      final now = DateTime.now();
-      if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds < 2) {
-        return;
-      }
-      
-      // Prevent tapping while panel is already opening
-      if (_isOpeningPanel) {
-        return;
-      }
-      
-      _lastTapTime = now;
-      
-      _openDeviceControlPanel();
+    // DEBOUNCING: Prevent multiple rapid taps
+    final now = DateTime.now();
+    if (_lastTapTime != null && now.difference(_lastTapTime!).inSeconds < 2) {
+      return;
+    }
+
+    // Prevent tapping while panel is already opening
+    if (_isOpeningPanel) {
+      return;
+    }
+
+    _lastTapTime = now;
+
+    _openDeviceControlPanel();
   }
 
   Future<void> _openDeviceControlPanel() async {
@@ -264,15 +146,13 @@ class _DeviceCardState extends State<DeviceCard> {
     setState(() {
       _isOpeningPanel = true;
     });
-    
-    try {
 
+    try {
       await _channel.invokeMethod('openDeviceControlPanel', {
         'deviceId': widget.device.deviceId,
         'homeId': widget.homeId,
         'homeName': widget.homeName ?? 'Home',
       });
-      
 
       // Reset loading state after a delay (panel Activity takes over)
       await Future.delayed(const Duration(milliseconds: 1000));
@@ -297,21 +177,18 @@ class _DeviceCardState extends State<DeviceCard> {
           ),
         );
       }
-    } on MissingPluginException catch (e) {
+    } on MissingPluginException catch (_) {
       if (mounted) {
         setState(() {
           _isOpeningPanel = false;
         });
       }
-      
     } catch (e) {
       if (mounted) {
         setState(() {
           _isOpeningPanel = false;
         });
       }
-      
     }
   }
 }
-

@@ -42,14 +42,17 @@ class HomeState {
     selectedBottomNavIndex: 0,
   );
 
+  // Sentinel to allow explicit null assignment in copyWith for nullable fields
+  static const Object _unset = Object();
+
   HomeState copyWith({
     HomeStatus? status,
     List<HomeEntity>? homes,
     List<DeviceEntity>? devices,
     List<RoomEntity>? rooms,
-    int? selectedHomeId,
-    int? selectedRoomId,
-    String? errorMessage,
+    Object? selectedHomeId = _unset,
+    Object? selectedRoomId = _unset,
+    Object? errorMessage = _unset,
     int? selectedBottomNavIndex,
   }) {
     return HomeState(
@@ -57,9 +60,15 @@ class HomeState {
       homes: homes ?? this.homes,
       devices: devices ?? this.devices,
       rooms: rooms ?? this.rooms,
-      selectedHomeId: selectedHomeId ?? this.selectedHomeId,
-      selectedRoomId: selectedRoomId ?? this.selectedRoomId,
-      errorMessage: errorMessage ?? this.errorMessage,
+      selectedHomeId: identical(selectedHomeId, _unset)
+          ? this.selectedHomeId
+          : selectedHomeId as int?,
+      selectedRoomId: identical(selectedRoomId, _unset)
+          ? this.selectedRoomId
+          : selectedRoomId as int?,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
       selectedBottomNavIndex:
           selectedBottomNavIndex ?? this.selectedBottomNavIndex,
     );

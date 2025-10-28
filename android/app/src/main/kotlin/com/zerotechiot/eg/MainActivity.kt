@@ -75,9 +75,10 @@ class MainActivity : FlutterActivity() {
                     val email = call.argument<String>("email")
                     val password = call.argument<String>("password")
                     val verificationCode = call.argument<String>("verificationCode")
+                    val countryCodeArg = call.argument<String>("countryCode")
 
                     if (email != null && password != null && verificationCode != null) {
-                        registerUser(email, password, verificationCode, result)
+                        registerUser(email, password, verificationCode, countryCodeArg, result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "Email, password, and verification code are required", null)
                     }
@@ -85,8 +86,9 @@ class MainActivity : FlutterActivity() {
 
                 "sendVerificationCode" -> {
                     val email = call.argument<String>("email")
+                    val countryCodeArg = call.argument<String>("countryCode")
                     if (email != null) {
-                        sendVerificationCode(email, result)
+                        sendVerificationCode(email, countryCodeArg, result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "Email is required", null)
                     }
@@ -224,7 +226,8 @@ class MainActivity : FlutterActivity() {
                         "deviceId" to (device.devId ?: ""),
                         "name" to (device.name ?: "no name"),
                         "isOnline" to device.isOnline,
-                        "image" to device.iconUrl
+                        "image" to device.iconUrl,
+                        "deviceType" to device.uiType
                     )
                 } ?: emptyList()
 
@@ -421,7 +424,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun sendVerificationCode(email: String, result: MethodChannel.Result) {
+    private fun sendVerificationCode(email: String, countryCodeArg: String?, result: MethodChannel.Result) {
         Log.d("TuyaSDK", "Sending verification code to: $email")
         
         // Validate email format
@@ -431,6 +434,10 @@ class MainActivity : FlutterActivity() {
             return
         }
         
+        // Resolve country code: prefer argument, fall back to device locale country
+        val localeCountry = try { resources.configuration.locales[0].country } catch (e: Exception) { null }
+        val countryCode = (countryCodeArg ?: localeCountry ?: "US").uppercase()
+
         // Check if SDK is properly initialized
         val userInstance = ThingHomeSdk.getUserInstance()
         if (userInstance == null) {
@@ -439,13 +446,13 @@ class MainActivity : FlutterActivity() {
             return
         }
         
-        Log.d("TuyaSDK", "User instance found, calling sendVerifyCodeWithUserName")
+        Log.d("TuyaSDK", "User instance found, calling sendVerifyCodeWithUserName with country: $countryCode")
         
         try {
             ThingHomeSdk.getUserInstance().sendVerifyCodeWithUserName(
                 email,
                 null, // Region code, can be null
-                "US", // Country code
+                "1", // Country code
                 1, // 1 for registration
                 object : IResultCallback {
                     override fun onSuccess() {
@@ -465,7 +472,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun registerUser(email: String, password: String, verificationCode: String, result: MethodChannel.Result) {
+    private fun registerUser(email: String, password: String, verificationCode: String, countryCodeArg: String?, result: MethodChannel.Result) {
         Log.d("TuyaSDK", "Registering user with email: $email")
         
         // Validate inputs
@@ -495,11 +502,15 @@ class MainActivity : FlutterActivity() {
             return
         }
         
-        Log.d("TuyaSDK", "User instance found, calling registerAccountWithEmail")
+        // Resolve country code: prefer argument, fall back to device locale country
+        val localeCountry = try { resources.configuration.locales[0].country } catch (e: Exception) { null }
+        val countryCode = (countryCodeArg ?: localeCountry ?: "US").uppercase()
+
+        Log.d("TuyaSDK", "User instance found, calling registerAccountWithEmail with country: $countryCode")
         
         try {
             ThingHomeSdk.getUserInstance().registerAccountWithEmail(
-                "US",
+                "1",
                 email,
                 password,
                 verificationCode,

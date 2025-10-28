@@ -37,11 +37,11 @@ class HomeCubit extends Cubit<HomeState> {
           errorMessage: failure.message,
         ),
       ),
-      (homes) {
+      (homes) async{
         emit(state.copyWith(status: HomeStatus.homesLoaded, homes: homes));
         if (homes.isNotEmpty) {
+          await loadRooms(homes.first.homeId);
           loadDevices(homes.first.homeId);
-          loadRooms(homes.first.homeId);
         }
       },
     );

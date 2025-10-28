@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:tuya_app/src/core/error/failures.dart';
 import 'package:tuya_app/src/core/utils/constants.dart';
@@ -18,7 +19,9 @@ class TuyaAuthDataSource {
     } on PlatformException catch (e) {
       return Left(_handlePlatformException(e));
     } catch (e) {
-      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      return Left(
+        ServerFailure('An unexpected error occurred: ${e.toString()}'),
+      );
     }
   }
 
@@ -33,36 +36,53 @@ class TuyaAuthDataSource {
     } on PlatformException catch (e) {
       return Left(_handlePlatformException(e));
     } catch (e) {
-      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      return Left(
+        ServerFailure('An unexpected error occurred: ${e.toString()}'),
+      );
     }
   }
 
-  Future<Either<Failure, User>> register(String email, String password, String verificationCode) async {
+  Future<Either<Failure, User>> register(
+    String email,
+    String password,
+    String verificationCode,
+  ) async {
     try {
+      final locale = WidgetsBinding.instance.platformDispatcher.locale;
+      final countryCode = (locale.countryCode ?? 'US');
       final result = await AppConstants.channel.invokeMethod('register', {
         'email': email,
         'password': password,
         'verificationCode': verificationCode,
+        'countryCode': countryCode,
       });
       _currentUser = User.fromJson(result);
       return Right(_currentUser!);
     } on PlatformException catch (e) {
       return Left(_handlePlatformException(e));
     } catch (e) {
-      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      return Left(
+        ServerFailure('An unexpected error occurred: ${e.toString()}'),
+      );
     }
   }
 
   Future<Either<Failure, String>> sendVerificationCode(String email) async {
     try {
-      final result = await AppConstants.channel.invokeMethod('sendVerificationCode', {
-        'email': email,
-      });
+      final locale = WidgetsBinding.instance.platformDispatcher.locale;
+      final countryCode = (locale.countryCode ?? 'US');
+      print('code $countryCode');
+      final result = await AppConstants.channel.invokeMethod(
+        'sendVerificationCode',
+        {'email': email, 'countryCode': countryCode},
+      );
       return Right(result.toString());
     } on PlatformException catch (e) {
       return Left(_handlePlatformException(e));
     } catch (e) {
-      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      return Left(
+        ServerFailure('An unexpected error occurred: ${e.toString()}'),
+      );
     }
   }
 
@@ -74,7 +94,9 @@ class TuyaAuthDataSource {
     } on PlatformException catch (e) {
       return Left(_handlePlatformException(e));
     } catch (e) {
-      return Left(ServerFailure('An unexpected error occurred: ${e.toString()}'));
+      return Left(
+        ServerFailure('An unexpected error occurred: ${e.toString()}'),
+      );
     }
   }
 
