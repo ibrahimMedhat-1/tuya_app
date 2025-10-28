@@ -76,8 +76,7 @@ class TuyaHomeDataSource {
     }
   }
 
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> addHouse({
+   Future<Either<Failure, Map<String, dynamic>>> addHouse({
     required String name,
     String? geoName,
     double? lon,
@@ -100,8 +99,7 @@ class TuyaHomeDataSource {
     }
   }
 
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> addRoom({
+   Future<Either<Failure, Map<String, dynamic>>> addRoom({
     required int homeId,
     required String name,
     String? iconUrl,

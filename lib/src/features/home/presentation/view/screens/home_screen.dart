@@ -460,7 +460,7 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   _buildNavItem(
                     context,
-                    NavIcons.home_wifi_angle_svgrepo_com_2,
+                    NavIcons.home,
                     'Home',
                     state.selectedBottomNavIndex == 0,
                     onTap: () =>
@@ -468,7 +468,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   _buildNavItem(
                     context,
-                    NavIcons.favorite_svgrepo_com,
+                    NavIcons.favourites,
                     'Favorites',
                     state.selectedBottomNavIndex == 1,
                     onTap: () =>
@@ -478,7 +478,7 @@ class HomeScreen extends StatelessWidget {
                   SizedBox(width: centerButtonSize),
                   _buildNavItem(
                     context,
-                    NavIcons.setting_3_svgrepo_com,
+                    NavIcons.scenes,
                     'Scene',
                     state.selectedBottomNavIndex == 3,
                     onTap: () =>
@@ -636,8 +636,9 @@ class HomeScreen extends StatelessWidget {
               if (value != null) {
                 await context.read<HomeCubit>().loadRooms(value);
 
-                if (context.mounted)
+                if (context.mounted) {
                   context.read<HomeCubit>().loadAllHomeDevices(value);
+                }
               }
             },
           ),
@@ -1104,7 +1105,7 @@ class HomeScreen extends StatelessWidget {
               ),
               16.height,
               // Mock search results
-              Container(
+              SizedBox(
                 height: 200,
                 child: ListView(
                   children: [

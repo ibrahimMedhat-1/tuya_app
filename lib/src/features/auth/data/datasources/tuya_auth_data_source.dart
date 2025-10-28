@@ -71,7 +71,6 @@ class TuyaAuthDataSource {
     try {
       final locale = WidgetsBinding.instance.platformDispatcher.locale;
       final countryCode = (locale.countryCode ?? 'US');
-      print('code $countryCode');
       final result = await AppConstants.channel.invokeMethod(
         'sendVerificationCode',
         {'email': email, 'countryCode': countryCode},
