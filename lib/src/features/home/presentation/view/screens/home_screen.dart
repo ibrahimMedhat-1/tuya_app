@@ -440,71 +440,74 @@ class HomeScreen extends StatelessWidget {
             ? 70.0
             : 80.0;
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              height: navHeight,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade300,
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+        return SizedBox(
+          height: navHeight+(centerButtonSize/2),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: navHeight,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(
+                      context,
+                      NavIcons.home,
+                      'Home',
+                      state.selectedBottomNavIndex == 0,
+                      onTap: () =>
+                          context.read<HomeCubit>().selectBottomNavIndex(0),
+                    ),
+                    _buildNavItem(
+                      context,
+                      NavIcons.favourites,
+                      'Favorites',
+                      state.selectedBottomNavIndex == 1,
+                      onTap: () =>
+                          context.read<HomeCubit>().selectBottomNavIndex(1),
+                    ),
+                    // Empty space for center button
+                    SizedBox(width: centerButtonSize),
+                    _buildNavItem(
+                      context,
+                      NavIcons.scenes,
+                      'Scene',
+                      state.selectedBottomNavIndex == 3,
+                      onTap: () =>
+                          context.read<HomeCubit>().selectBottomNavIndex(3),
+                    ),
+                    _buildNavItem(
+                      context,
+                      Icons.person,
+                      'Me',
+                      state.selectedBottomNavIndex == 4,
+                      onTap: () =>
+                          context.read<HomeCubit>().selectBottomNavIndex(4),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(
-                    context,
-                    NavIcons.home,
-                    'Home',
-                    state.selectedBottomNavIndex == 0,
-                    onTap: () =>
-                        context.read<HomeCubit>().selectBottomNavIndex(0),
-                  ),
-                  _buildNavItem(
-                    context,
-                    NavIcons.favourites,
-                    'Favorites',
-                    state.selectedBottomNavIndex == 1,
-                    onTap: () =>
-                        context.read<HomeCubit>().selectBottomNavIndex(1),
-                  ),
-                  // Empty space for center button
-                  SizedBox(width: centerButtonSize),
-                  _buildNavItem(
-                    context,
-                    NavIcons.scenes,
-                    'Scene',
-                    state.selectedBottomNavIndex == 3,
-                    onTap: () =>
-                        context.read<HomeCubit>().selectBottomNavIndex(3),
-                  ),
-                  _buildNavItem(
-                    context,
-                    Icons.person,
-                    'Me',
-                    state.selectedBottomNavIndex == 4,
-                    onTap: () =>
-                        context.read<HomeCubit>().selectBottomNavIndex(4),
-                  ),
-                ],
+              // Center button positioned to protrude upward
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _buildCenterButton(context, centerButtonSize),
+                ),
               ),
-            ),
-            // Center button positioned to protrude upward
-            Positioned(
-              top: -centerButtonSize / 2,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: _buildCenterButton(context, centerButtonSize),
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
