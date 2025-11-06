@@ -3,6 +3,7 @@ package com.zerotechiot.eg
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -16,8 +17,11 @@ import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.android.user.api.ILogoutCallback
 import com.thingclips.smart.android.user.api.IRegisterCallback
 import com.thingclips.smart.android.user.bean.User
+import android.content.Intent
 import com.thingclips.smart.api.MicroContext
+import com.thingclips.smart.api.router.UrlBuilder
 import com.thingclips.smart.api.service.MicroServiceManager
+import com.thingclips.smart.api.service.RedirectService
 import com.thingclips.smart.clearcache.api.ClearCacheService
 import com.thingclips.smart.commonbiz.bizbundle.family.api.AbsBizBundleFamilyService
 import com.thingclips.smart.home.sdk.ThingHomeSdk
@@ -169,6 +173,16 @@ class MainActivity : FlutterActivity() {
                         addRoom(homeId.toLong(), name, iconUrl, result)
                     } else {
                         result.error("INVALID_ARGUMENTS", "homeId and name are required", null)
+                    }
+                }
+
+                "openScenes" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val homeName = call.argument<String>("homeName")
+                    if (homeId != null) {
+                        openScenesBizBundle(homeId.toLong(), homeName ?: "Home", result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId is required", null)
                     }
                 }
 
@@ -830,6 +844,104 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+
+    private fun openScenesBizBundle(homeId: Long, homeName: String, result: MethodChannel.Result) {
+        try {
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+            Log.d("TuyaSDK", "🎬 Opening Scenes BizBundle UI")
+            Log.d("TuyaSDK", "   Home ID: $homeId")
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+            
+            // CRITICAL: Set the current family ID before opening Scene UI
+            val serviceManager = MicroServiceManager.getInstance()
+            if (serviceManager == null) {
+                Log.e("TuyaSDK", "❌ MicroServiceManager is null")
+                result.error("SERVICE_MANAGER_NULL", "MicroServiceManager is not initialized", null)
+                return
+            }
+            
+            val familyService = serviceManager.findServiceByInterface(
+                AbsBizBundleFamilyService::class.java.name
+            ) as? AbsBizBundleFamilyService
+            
+            if (familyService == null) {
+                Log.e("TuyaSDK", "❌ AbsBizBundleFamilyService not found")
+                result.error("FAMILY_SERVICE_NULL", "Family service not initialized", null)
+                return
+            }
+            
+            Log.d("TuyaSDK", "✅ Setting current family to: $homeName ($homeId)")
+            familyService.shiftCurrentFamily(homeId, homeName)
+            
+            // Now open Scene UI using UrlBuilder with proper scheme
+            val bundle = Bundle()
+            bundle.putLong("homeId", homeId)
+            
+            // Try different scene route paths
+            val sceneUrls = listOf(
+                "thing://scene/list",
+                "scene",
+                "thing://scene",
+                "/scene/list"
+            )
+            
+            var sceneOpened = false
+            val redirectService = MicroContext.findServiceByInterface(RedirectService::class.java.name) as? RedirectService
+            
+            if (redirectService != null) {
+                for (sceneUrl in sceneUrls) {
+                    try {
+                        Log.d("TuyaSDK", "Trying scene URL: $sceneUrl")
+                        val urlBuilder = UrlBuilder(this, sceneUrl)
+                        urlBuilder.putExtras(bundle)
+                        
+                        redirectService.redirectUrl(urlBuilder, object : RedirectService.InterceptorCallback {
+                            override fun onContinue(urlBuilder: UrlBuilder?) {
+                                Log.d("TuyaSDK", "✅ Scene redirect successful with URL: $sceneUrl")
+                                sceneOpened = true
+                            }
+                            
+                            override fun interceptor(url: String?) {
+                                Log.d("TuyaSDK", "Scene URL interceptor: $url")
+                            }
+                        })
+                        
+                        // If we got here without exception, break
+                        if (sceneOpened) break
+                    } catch (e: Exception) {
+                        Log.w("TuyaSDK", "Failed with URL $sceneUrl: ${e.message}")
+                        continue
+                    }
+                }
+            }
+            
+            if (!sceneOpened) {
+                Log.w("TuyaSDK", "⚠️ Could not open via RedirectService, trying direct scene activity...")
+                // Try opening scene activity directly
+                try {
+                    val intent = Intent()
+                    intent.putExtra("homeId", homeId)
+                    intent.putExtra("homeName", homeName)
+                    intent.action = "android.intent.action.VIEW"
+                    intent.data = android.net.Uri.parse("thing://scene/list?homeId=$homeId")
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                    Log.d("TuyaSDK", "✅ Scene activity started via Intent")
+                } catch (intentException: Exception) {
+                    Log.e("TuyaSDK", "❌ Failed to open scene via Intent: ${intentException.message}")
+                    result.error("SCENE_OPEN_FAILED", "Could not open Scene UI. Scene BizBundle may not be installed.", null)
+                    return
+                }
+            }
+            
+            Log.d("TuyaSDK", "✅ Scene UI opened successfully")
+            result.success(true)
+            
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "❌ Error opening Scene BizBundle: ${e.message}", e)
+            result.error("SCENE_ERROR", "Failed to open scenes: ${e.message}", null)
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()

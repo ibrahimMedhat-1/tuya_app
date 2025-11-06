@@ -154,6 +154,12 @@ dependencies {
         exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
+    // Scene BizBundle - for smart scenes and automation (version managed by BOM)
+    implementation("com.thingclips.smart:thingsmart-bizbundle-scene") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
     // MiniApp BizBundle
     implementation("com.thingclips.smart:thingsmart-bizbundle-miniapp") {
         exclude(group = "com.gyf.immersionbar", module = "immersionbar")

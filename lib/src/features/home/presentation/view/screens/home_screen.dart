@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
@@ -441,7 +442,7 @@ class HomeScreen extends StatelessWidget {
             : 80.0;
 
         return SizedBox(
-          height: navHeight+(centerButtonSize/2),
+          height: navHeight + (centerButtonSize / 2),
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -483,8 +484,9 @@ class HomeScreen extends StatelessWidget {
                       NavIcons.scenes,
                       'Scene',
                       state.selectedBottomNavIndex == 3,
-                      onTap: () =>
-                          context.read<HomeCubit>().selectBottomNavIndex(3),
+                      onTap: () {
+                        _openScenesUI(context, state);
+                      },
                     ),
                     _buildNavItem(
                       context,
@@ -520,28 +522,75 @@ class HomeScreen extends StatelessWidget {
         ? 28.0
         : 32.0;
 
-    return GestureDetector(
-      onTap: () {
-        // Add center button functionality here
-        context.read<HomeCubit>().pairDevices();
-      },
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(size / 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(30),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+    return BlocBuilder<HomeCubit, HomeState>(
+      builder: (context, state) {
+        return GestureDetector(
+          onTap: () => context.watch<HomeCubit>().pairDevices(),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(size / 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(30),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Icon(Icons.graphic_eq, color: Colors.white, size: iconSize),
-      ),
+            child: Icon(Icons.graphic_eq, color: Colors.white, size: iconSize),
+          ),
+        );
+      },
     );
+  }
+
+  Future<void> _openScenesUI(BuildContext context, HomeState state) async {
+    if (state.selectedHomeId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a home first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Get the selected home name
+      final selectedHome = state.homes.firstWhere(
+        (home) => home.homeId == state.selectedHomeId,
+        orElse: () => state.homes.first,
+      );
+
+      const MethodChannel channel = MethodChannel(
+        'com.zerotechiot.eg/tuya_sdk',
+      );
+      await channel.invokeMethod('openScenes', {
+        'homeId': state.selectedHomeId,
+        'homeName': selectedHome.name,
+      });
+    } on PlatformException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open scenes: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening scenes: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildNavItem(
