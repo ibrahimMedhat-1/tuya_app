@@ -31,6 +31,8 @@ import com.thingclips.smart.home.sdk.bean.RoomBean
 import com.thingclips.smart.home.sdk.callback.IThingGetHomeListCallback
 import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
 import com.thingclips.smart.home.sdk.callback.IThingRoomResultCallback
+import com.thingclips.smart.scene.business.api.IThingSceneBusinessService
+import com.thingclips.smart.scene.home.SceneHomePipeLine
 import com.thingclips.smart.sdk.api.IResultCallback
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -39,6 +41,10 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val channel = "com.zerotechiot.eg/tuya_sdk"
+    
+    companion object {
+        private var isScenePipelineInitialized = false
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -198,6 +204,22 @@ class MainActivity : FlutterActivity() {
             password,
             object : ILoginCallback {
                 override fun onSuccess(user: User?) {
+                    Log.d("TuyaSDK", "✅ Login successful for user: ${user?.email}")
+                    
+                    // Initialize SceneHomePipeLine for real-time scene data sync
+                    // Should only be called once per app lifecycle after login
+                    if (!isScenePipelineInitialized) {
+                        try {
+                            Log.d("TuyaSDK", "Initializing SceneHomePipeLine for scene data sync...")
+                            SceneHomePipeLine().run()
+                            isScenePipelineInitialized = true
+                            Log.d("TuyaSDK", "✅ SceneHomePipeLine initialized successfully")
+                        } catch (e: Exception) {
+                            Log.e("TuyaSDK", "⚠️ Failed to initialize SceneHomePipeLine: ${e.message}")
+                            // Non-critical error, continue with login
+                        }
+                    }
+                    
                     val userData = mapOf(
                         "id" to (user?.uid ?: ""),
                         "email" to (user?.email ?: email),
@@ -427,6 +449,19 @@ class MainActivity : FlutterActivity() {
     private fun checkLoginStatus(result: MethodChannel.Result) {
         val user = ThingHomeSdk.getUserInstance().user
         if (user != null) {
+            // Initialize SceneHomePipeLine if user is already logged in
+            if (!isScenePipelineInitialized) {
+                try {
+                    Log.d("TuyaSDK", "User already logged in, initializing SceneHomePipeLine...")
+                    SceneHomePipeLine().run()
+                    isScenePipelineInitialized = true
+                    Log.d("TuyaSDK", "✅ SceneHomePipeLine initialized successfully")
+                } catch (e: Exception) {
+                    Log.e("TuyaSDK", "⚠️ Failed to initialize SceneHomePipeLine: ${e.message}")
+                    // Non-critical error, continue
+                }
+            }
+            
             val userData = mapOf(
                 "id" to (user.uid ?: ""),
                 "email" to (user.email ?: ""),
@@ -850,6 +885,7 @@ class MainActivity : FlutterActivity() {
             Log.d("TuyaSDK", "════════════════════════════════════════")
             Log.d("TuyaSDK", "🎬 Opening Scenes BizBundle UI")
             Log.d("TuyaSDK", "   Home ID: $homeId")
+            Log.d("TuyaSDK", "   Home Name: $homeName")
             Log.d("TuyaSDK", "════════════════════════════════════════")
             
             // CRITICAL: Set the current family ID before opening Scene UI
@@ -860,6 +896,7 @@ class MainActivity : FlutterActivity() {
                 return
             }
             
+            // 1. Switch to the correct family first
             val familyService = serviceManager.findServiceByInterface(
                 AbsBizBundleFamilyService::class.java.name
             ) as? AbsBizBundleFamilyService
@@ -873,66 +910,22 @@ class MainActivity : FlutterActivity() {
             Log.d("TuyaSDK", "✅ Setting current family to: $homeName ($homeId)")
             familyService.shiftCurrentFamily(homeId, homeName)
             
-            // Now open Scene UI using UrlBuilder with proper scheme
-            val bundle = Bundle()
-            bundle.putLong("homeId", homeId)
+            // 2. Get the Scene Business Service and open scene UI
+            Log.d("TuyaSDK", "Getting IThingSceneBusinessService...")
+            val sceneService = MicroContext.findServiceByInterface(
+                IThingSceneBusinessService::class.java.name
+            ) as? IThingSceneBusinessService
             
-            // Try different scene route paths
-            val sceneUrls = listOf(
-                "thing://scene/list",
-                "scene",
-                "thing://scene",
-                "/scene/list"
-            )
-            
-            var sceneOpened = false
-            val redirectService = MicroContext.findServiceByInterface(RedirectService::class.java.name) as? RedirectService
-            
-            if (redirectService != null) {
-                for (sceneUrl in sceneUrls) {
-                    try {
-                        Log.d("TuyaSDK", "Trying scene URL: $sceneUrl")
-                        val urlBuilder = UrlBuilder(this, sceneUrl)
-                        urlBuilder.putExtras(bundle)
-                        
-                        redirectService.redirectUrl(urlBuilder, object : RedirectService.InterceptorCallback {
-                            override fun onContinue(urlBuilder: UrlBuilder?) {
-                                Log.d("TuyaSDK", "✅ Scene redirect successful with URL: $sceneUrl")
-                                sceneOpened = true
-                            }
-                            
-                            override fun interceptor(url: String?) {
-                                Log.d("TuyaSDK", "Scene URL interceptor: $url")
-                            }
-                        })
-                        
-                        // If we got here without exception, break
-                        if (sceneOpened) break
-                    } catch (e: Exception) {
-                        Log.w("TuyaSDK", "Failed with URL $sceneUrl: ${e.message}")
-                        continue
-                    }
-                }
+            if (sceneService == null) {
+                Log.e("TuyaSDK", "❌ IThingSceneBusinessService not found")
+                result.error("SCENE_SERVICE_NULL", "Scene service not initialized. Please ensure Scene BizBundle is properly configured.", null)
+                return
             }
             
-            if (!sceneOpened) {
-                Log.w("TuyaSDK", "⚠️ Could not open via RedirectService, trying direct scene activity...")
-                // Try opening scene activity directly
-                try {
-                    val intent = Intent()
-                    intent.putExtra("homeId", homeId)
-                    intent.putExtra("homeName", homeName)
-                    intent.action = "android.intent.action.VIEW"
-                    intent.data = android.net.Uri.parse("thing://scene/list?homeId=$homeId")
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(intent)
-                    Log.d("TuyaSDK", "✅ Scene activity started via Intent")
-                } catch (intentException: Exception) {
-                    Log.e("TuyaSDK", "❌ Failed to open scene via Intent: ${intentException.message}")
-                    result.error("SCENE_OPEN_FAILED", "Could not open Scene UI. Scene BizBundle may not be installed.", null)
-                    return
-                }
-            }
+            Log.d("TuyaSDK", "✅ IThingSceneBusinessService found, opening add scene UI...")
+            // Open the add scene screen
+            // requestCode 1001 is used for scene activity result
+            sceneService.addBizSceneBean(this, homeId, 1001)
             
             Log.d("TuyaSDK", "✅ Scene UI opened successfully")
             result.success(true)

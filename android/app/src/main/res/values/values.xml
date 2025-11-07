@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Enable Scene BizBundle support -->
+    <bool name="is_scene_support">true</bool>
+</resources>
+

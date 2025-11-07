@@ -14,6 +14,7 @@ import com.thingclips.smart.bizbundle.initializer.BizBundleInitializer
 import com.thingclips.smart.commonbiz.bizbundle.family.api.AbsBizBundleFamilyService
 import com.thingclips.smart.home.sdk.ThingHomeSdk
 import com.thingclips.smart.thingpackconfig.PackConfig
+import dagger.hilt.android.HiltAndroidApp
 
 /**
  * Tuya Smart Application
@@ -24,7 +25,9 @@ import com.thingclips.smart.thingpackconfig.PackConfig
  * 2. PackConfig delegation for BizBundle configuration
  * 3. Custom FamilyService registration (stores home context)
  * 4. RedirectService URL interceptor
+ * 5. Hilt for dependency injection (required for UI BizBundle)
  */
+@HiltAndroidApp
 class TuyaSmartApplication : Application() {
     
     companion object {
@@ -53,8 +56,9 @@ class TuyaSmartApplication : Application() {
             AbsBizBundleFamilyService::class.java,
             BizBundleFamilyServiceImpl()
         )
+
+
     }
-    
     private fun initializeDatabase() {
         try {
             // Clear any corrupted database files
@@ -64,7 +68,7 @@ class TuyaSmartApplication : Application() {
                 "tuya_smart.db-wal",
                 "tuya_smart.db-shm"
             )
-            
+
             databaseFiles.forEach { dbFile ->
                 try {
                     val file = getDatabasePath(dbFile)
@@ -78,9 +82,7 @@ class TuyaSmartApplication : Application() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "   Error during database initialization", e)
-        }
-    }
-    
+        }}
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
         Log.d(TAG, "Installing MultiDex...")

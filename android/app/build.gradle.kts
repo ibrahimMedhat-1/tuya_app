@@ -3,6 +3,10 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+    // CRITICAL: Hilt 2.50 plugin for dependency injection (required for UI BizBundle)
+    id("com.google.dagger.hilt.android")
+    // KSP for annotation processing (Kotlin 2.0.21 compatible)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -116,6 +120,11 @@ configurations.all {
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
     implementation("com.alibaba:fastjson:2.0.59")
+    
+    // CRITICAL: Hilt 2.50 dependencies for dependency injection (required for UI BizBundle v5.8.0+)
+    // Minimum required version: 2.43.2
+    implementation("com.google.dagger:hilt-android:2.50")
+    ksp("com.google.dagger:hilt-android-compiler:2.50") // REQUIRED: Annotation processor
     
     // Force specific versions to avoid conflicts
     implementation("com.squareup.okhttp3:okhttp:5.2.0")
@@ -254,3 +263,9 @@ dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("com.google.android.material:material:1.13.0")
 }
+
+// KSP configuration for Hilt 2.50 annotation processing
+ksp {
+    arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+}
+
