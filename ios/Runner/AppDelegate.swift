@@ -143,7 +143,20 @@ import ThingModuleServices
             withInstance: TuyaProtocolHandler.shared
         )
         
-        NSLog("✅ [iOS-NSLog] BizBundle protocols registered")
+        // Register Scene BizBundle protocols (required for Scene UI)
+        // https://developer.tuya.com/en/docs/app-development/scene?id=Ka8qf8lmlptsr
+        // TuyaProtocolHandler now implements all protocols including Scene protocols
+        ThingSmartBizCore.sharedInstance().registerService(
+            ThingFamilyProtocol.self,
+            withInstance: TuyaProtocolHandler.shared
+        )
+        
+        ThingSmartBizCore.sharedInstance().registerService(
+            ThingSmartHouseIndexProtocol.self,
+            withInstance: TuyaProtocolHandler.shared
+        )
+        
+        NSLog("✅ [iOS-NSLog] BizBundle protocols registered (Home + Scene)")
     }
     
     // MARK: - Flutter MethodChannel Setup

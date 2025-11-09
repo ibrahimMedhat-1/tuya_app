@@ -10,10 +10,10 @@ import Foundation
 import ThingSmartDeviceKit
 import ThingModuleServices
 
-/// Protocol handler for ThingSmartHomeDataProtocol
-/// This is REQUIRED for BizBundle UI components to function properly
-/// They query this protocol to get the current home context
-class TuyaProtocolHandler: NSObject, ThingSmartHomeDataProtocol {
+/// Protocol handler for ThingSmartHomeDataProtocol, ThingFamilyProtocol, and ThingSmartHouseIndexProtocol
+/// This is REQUIRED for BizBundle UI components (Device Panel, Scene, etc.) to function properly
+/// They query these protocols to get the current home context and permissions
+class TuyaProtocolHandler: NSObject, ThingSmartHomeDataProtocol, ThingFamilyProtocol, ThingSmartHouseIndexProtocol {
     static let shared = TuyaProtocolHandler()
     
     private override init() {
@@ -95,5 +95,40 @@ class TuyaProtocolHandler: NSObject, ThingSmartHomeDataProtocol {
         UserDefaults.standard.removeObject(forKey: "currentHomeId")
         UserDefaults.standard.synchronize()
         NSLog("✅ [iOS-NSLog] Current home ID cleared")
+    }
+    
+    // MARK: - ThingFamilyProtocol (Required for Scene BizBundle)
+    
+    /// Returns the current home ID required by Scene BizBundle
+    /// https://developer.tuya.com/en/docs/app-development/scene?id=Ka8qf8lmlptsr
+    func currentFamilyId() -> Int64 {
+        if let storedHomeId = getCurrentHomeId() {
+            NSLog("✅ [iOS-NSLog] Scene: currentFamilyId = \(storedHomeId)")
+            return storedHomeId
+        }
+        NSLog("⚠️ [iOS-NSLog] Scene: No current home ID found, returning 0")
+        return 0
+    }
+    
+    /// Checks if the user has required permissions to edit scenes
+    /// Returns YES to allow all logged-in users to edit scenes
+    func checkAdminAndRightLimit(_ alert: Bool) -> Bool {
+        NSLog("✅ [iOS-NSLog] Scene: checkAdminAndRightLimit called, returning true")
+        return true
+    }
+    
+    /// Alternative method for checking admin rights with homeId
+    func checkAdminAndRightLimit(_ alert: Bool, withHomeId homeId: Int64) -> Bool {
+        NSLog("✅ [iOS-NSLog] Scene: checkAdminAndRightLimit with homeId \(homeId), returning true")
+        return true
+    }
+    
+    // MARK: - ThingSmartHouseIndexProtocol (Required for Scene BizBundle)
+    
+    /// Indicates whether the user is the administrator of the current home
+    /// Returns YES to allow all users to edit scenes
+    func homeAdminValidation() -> Bool {
+        NSLog("✅ [iOS-NSLog] Scene: homeAdminValidation called, returning true")
+        return true
     }
 }

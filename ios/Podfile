@@ -35,14 +35,31 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
-  # Exact from working sample
+  # Core Tuya SDK
   pod 'ThingSmartCryption', :path => './ios_core_sdk'
   pod 'ThingSmartHomeKit', '~> 6.7.0'
   pod 'ThingSmartBusinessExtensionKit', '~> 6.7.0'
+  pod 'ThingSmartBusinessExtensionKitBLEExtra','~> 6.7.0'
+  
+  # Core BizBundles (for device pairing and control)
   pod 'ThingSmartActivatorBizBundle'
   pod 'ThingSmartPanelBizBundle'
   pod 'ThingSmartSceneBizBundle', '~> 6.7.0'
-  pod 'ThingSmartBusinessExtensionKitBLEExtra','~> 6.7.0'
+  
+  # IPC/Camera SDKs and BizBundles (for camera/video surveillance devices)
+  pod 'ThingSmartCameraKit'
+  pod 'ThingSmartCameraM'
+  pod 'ThingSmartIPCKitBizBundle'
+  pod 'ThingSmartCameraPanelBizBundle'
+  pod 'ThingSmartCameraRNPanelBizBundle'
+  
+  # Scene BizBundles (for smart scene automation)
+  pod 'ThingSmartSceneExtendBizBundle'
+  pod 'ThingSmartMiniAppBizBundle'
+  pod 'ThingSmartMapKitBizBundle'
+  
+  # Smart Lock SDK (for locks with video/camera features)
+  pod 'ThingSmartLockKit', '~> 6.7.0'
   
   target 'RunnerTests' do
     inherit! :search_paths

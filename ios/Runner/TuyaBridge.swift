@@ -12,6 +12,7 @@ import ThingSmartDeviceKit
 import ThingSmartBizCore
 import ThingModuleServices
 import ThingSmartFamilyBizKit
+import ThingSmartSceneKit
 import UIKit
 
 class TuyaBridge: NSObject {
@@ -221,23 +222,38 @@ class TuyaBridge: NSObject {
         ThingSmartFamilyBiz.sharedInstance().setCurrentFamilyId(homeId)
         NSLog("✅ [iOS-NSLog] Current family set to: \(homeId)")
         
-        guard let deviceList = home.deviceList, !deviceList.isEmpty else {
-            NSLog("ℹ️ [iOS-NSLog] No devices found for home \(homeId)")
-            result([])
-            return
-        }
-        
-        let devicesData = deviceList.map { (device: ThingSmartDeviceModel) -> [String: Any] in
-            return [
-                "deviceId": device.devId ?? "",
-                "name": device.name ?? "no name",
-                "isOnline": device.isOnline,
-                "image": device.iconUrl ?? ""
-            ]
-        }
-        
-        NSLog("✅ [iOS-NSLog] Found \(devicesData.count) devices for home \(homeId)")
-        result(devicesData)
+        // IMPORTANT: Must call getDetailWithSuccess to fetch the complete home data including devices
+        // Simply creating ThingSmartHome instance doesn't load devices automatically
+        home.getDetailWithSuccess({ (homeModel) in
+            NSLog("✅ [iOS-NSLog] Successfully fetched home details for home \(homeId)")
+            
+            // After fetching home details, access deviceList from the home instance (not the model)
+            guard let deviceList = home.deviceList, !deviceList.isEmpty else {
+                NSLog("ℹ️ [iOS-NSLog] No devices found for home \(homeId)")
+                result([])
+                return
+            }
+            
+            let devicesData = deviceList.map { (device: ThingSmartDeviceModel) -> [String: Any] in
+                return [
+                    "deviceId": device.devId ?? "",
+                    "name": device.name ?? "no name",
+                    "isOnline": device.isOnline,
+                    "image": device.iconUrl ?? ""
+                ]
+            }
+            
+            NSLog("✅ [iOS-NSLog] Found \(devicesData.count) devices for home \(homeId)")
+            result(devicesData)
+            
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to get home details: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "GET_HOME_DETAILS_FAILED",
+                message: error?.localizedDescription ?? "Failed to get home details",
+                details: nil
+            ))
+        })
     }
     
     // MARK: - Device Pairing (BizBundle UI)
@@ -460,28 +476,35 @@ class TuyaBridge: NSObject {
                 return
             }
             
-            // Get the Scene protocol service from BizBundle
-            guard let sceneService = ThingSmartBizCore.sharedInstance()
-                .service(of: ThingSmartSceneProtocol.self) as? ThingSmartSceneProtocol else {
-                NSLog("❌ [iOS-NSLog] ThingSmartSceneProtocol service not available")
-                result(FlutterError(
-                    code: "SERVICE_NOT_AVAILABLE",
-                    message: "Scene service not available. Make sure Scene BizBundle is properly installed.",
-                    details: nil
-                ))
-                return
+            NSLog("✅ [iOS-NSLog] Opening Scene automation UI")
+            
+            // According to official Tuya documentation:
+            // https://developer.tuya.com/en/docs/app-development/scene?id=Ka8qf8lmlptsr
+            // Use addAutoScene to open the automation scene creation UI
+            // Direct Objective-C protocol call through bridging header
+            let sceneService = ThingSmartBizCore.sharedInstance().service(of: ThingSmartSceneProtocol.self)
+            let serviceObj = sceneService as AnyObject
+            
+            // Use performSelector to call the Objective-C method
+            let selector = NSSelectorFromString("addAutoScene:")
+            if serviceObj.responds(to: selector) {
+                _ = serviceObj.perform(selector, with: { (sceneModel: ThingSmartSceneModel?, addSuccess: Bool) in
+                    if addSuccess {
+                        NSLog("✅ [iOS-NSLog] Scene automation created successfully")
+                        if let model = sceneModel {
+                            NSLog("✅ [iOS-NSLog] Scene ID: \(model.sceneId ?? ""), Name: \(model.name ?? "")")
+                        }
+                    } else {
+                        NSLog("ℹ️ [iOS-NSLog] Scene UI closed or cancelled by user")
+                    }
+                } as @convention(block) (ThingSmartSceneModel?, Bool) -> Void)
+                
+                NSLog("✅ [iOS-NSLog] Scene automation UI launched successfully")
+                result(nil)
+            } else {
+                NSLog("❌ [iOS-NSLog] addAutoScene method not available on scene service")
+                result(FlutterError(code: "METHOD_NOT_AVAILABLE", message: "Scene method not available", details: nil))
             }
-            
-            NSLog("✅ [iOS-NSLog] ThingSmartSceneProtocol service found, opening scene list")
-            
-            // Open scene list/management UI
-            // The Scene BizBundle provides gotoSceneViewController for opening scene management
-            sceneService.gotoSceneViewController()
-            
-            NSLog("✅ [iOS-NSLog] Scene UI launched successfully")
-            
-            // Return success immediately
-            result(nil)
         }
     }
     
