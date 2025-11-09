@@ -1,0 +1,58 @@
+{
+  "" : {
+    "diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/Runner-master.dia",
+    "emit-module-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/Runner-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/Runner-master-emit-module.dia",
+    "swift-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/Runner-master.swiftdeps"
+  },
+  "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/Runner/AppDelegate.swift" : {
+    "const-values" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.swiftconstvalues",
+    "dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.d",
+    "diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.o",
+    "llvm-bc" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.bc",
+    "object" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.o",
+    "swift-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate.swiftdeps",
+    "swiftmodule" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppDelegate~partial.swiftmodule"
+  },
+  "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/Runner/AppKey.swift" : {
+    "const-values" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.swiftconstvalues",
+    "dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.d",
+    "diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.o",
+    "llvm-bc" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.bc",
+    "object" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.o",
+    "swift-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey.swiftdeps",
+    "swiftmodule" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/AppKey~partial.swiftmodule"
+  },
+  "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/Runner/TuyaBridge.swift" : {
+    "const-values" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.swiftconstvalues",
+    "dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.d",
+    "diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.o",
+    "llvm-bc" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.bc",
+    "object" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.o",
+    "swift-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge.swiftdeps",
+    "swiftmodule" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaBridge~partial.swiftmodule"
+  },
+  "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/Runner/TuyaProtocolHandler.swift" : {
+    "const-values" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.swiftconstvalues",
+    "dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.d",
+    "diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.o",
+    "llvm-bc" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.bc",
+    "object" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.o",
+    "swift-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler.swiftdeps",
+    "swiftmodule" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/TuyaProtocolHandler~partial.swiftmodule"
+  },
+  "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/rebuy/Desktop/Coding projects/ZeroTech-Flutter-IB2/ios/build/Runner.build/Debug-iphoneos/Runner.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

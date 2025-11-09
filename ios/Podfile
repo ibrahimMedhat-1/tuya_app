@@ -59,6 +59,7 @@ target 'Runner' do
   pod 'ThingSmartMapKitBizBundle'
   
   # Smart Lock SDK (for locks with video/camera features)
+  # Note: Lock panels use ThingSmartPanelBizBundle + Camera SDKs above
   pod 'ThingSmartLockKit', '~> 6.7.0'
   
   target 'RunnerTests' do

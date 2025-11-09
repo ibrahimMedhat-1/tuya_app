@@ -106,6 +106,22 @@ import ThingModuleServices
         }
     }
     
+    override func applicationDidEnterBackground(_ application: UIApplication) {
+        // IMPORTANT: Camera video streaming lifecycle management
+        // Per Tuya documentation: https://developer.tuya.com/en/docs/app-development/streaming?id=Kceuftys3the1
+        // Video streaming must be stopped when app enters background to prevent crashes
+        // related to hardware decoding and OpenGL rendering
+        NSLog("📱 [iOS-NSLog] App entering background - camera streams managed by BizBundle")
+        
+        // Note: Camera lifecycle is handled automatically by ThingSmartCameraPanelBizBundle
+        // The BizBundle stops video streams when views are dismissed or app backgrounds
+    }
+    
+    override func applicationWillEnterForeground(_ application: UIApplication) {
+        // Camera streams will resume automatically when BizBundle UI is presented again
+        NSLog("📱 [iOS-NSLog] App returning to foreground")
+    }
+    
     // MARK: - Tuya SDK Initialization
     
     private func initializeTuyaSDK() {
