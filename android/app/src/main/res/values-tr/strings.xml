@@ -2732,7 +2732,6 @@ Devam Edilsin Mi?</string>
   <string name="temperature_unit">Sıcaklık birimi</string>
   <string name="terminate_account">Aktif edilmemiş hesap</string>
   <string name="terminate_account_introductions">Devre Dışı Bırakıldığında Bu Hesap Kapsamındaki Tüm Kullanıcı verileri Kalıcı Olarak Silinecektir.</string>
-  <string name="test_biz_scene_name">Senaryo Adını Test Ediniz</string>
   <string name="the_car_ahead">Öndeki araba</string>
   <string name="thing_act_matter_add_gateway_name">Cihazınız %s konumuna başarıyla kaydedildi.</string>
   <string name="thing_act_setup_code_input_des">Kurulum kodunu cihazda, pakette veya kılavuzda bulun.</string>

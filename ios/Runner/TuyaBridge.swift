@@ -55,6 +55,10 @@ class TuyaBridge: NSObject {
             NSLog("🎮 [iOS-NSLog] openDeviceControlPanel called")
             openDeviceControlPanel(call, result: result, controller: controller)
             
+        case "openScenes":
+            NSLog("🎬 [iOS-NSLog] openScenes called")
+            openScenes(call, result: result, controller: controller)
+            
         default:
             NSLog("❌ [iOS-NSLog] Method not implemented: \(call.method)")
             result(FlutterMethodNotImplemented)
@@ -398,6 +402,83 @@ class TuyaBridge: NSObject {
             }
             
             NSLog("✅ [iOS-NSLog] Device control panel launched")
+            
+            // Return success immediately
+            result(nil)
+        }
+    }
+    
+    // MARK: - Scene Management (BizBundle UI)
+    
+    private func openScenes(_ call: FlutterMethodCall, result: @escaping FlutterResult, controller: UIViewController?) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for openScenes")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        // Extract homeId and homeName
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for openScenes")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let homeName = args["homeName"] as? String ?? ""
+        
+        NSLog("🎬 [iOS-NSLog] Opening Scene UI for home: \(homeId) (\(homeName))")
+        
+        guard ThingSmartUser.sharedInstance().isLogin else {
+            NSLog("❌ [iOS-NSLog] User not logged in for scene management")
+            result(FlutterError(
+                code: "NOT_LOGGED_IN",
+                message: "User must be logged in to manage scenes",
+                details: nil
+            ))
+            return
+        }
+        
+        // Set current family ID for Scene BizBundle context
+        TuyaProtocolHandler.shared.setCurrentHomeId(homeId)
+        ThingSmartFamilyBiz.sharedInstance().setCurrentFamilyId(homeId)
+        NSLog("✅ [iOS-NSLog] Current family set to: \(homeId)")
+        
+        // Must run on main thread for UI operations
+        DispatchQueue.main.async {
+            guard let flutterVC = controller else {
+                NSLog("❌ [iOS-NSLog] No view controller available for scene management")
+                result(FlutterError(
+                    code: "NO_CONTROLLER",
+                    message: "View controller not available",
+                    details: nil
+                ))
+                return
+            }
+            
+            // Get the Scene protocol service from BizBundle
+            guard let sceneService = ThingSmartBizCore.sharedInstance()
+                .service(of: ThingSmartSceneProtocol.self) as? ThingSmartSceneProtocol else {
+                NSLog("❌ [iOS-NSLog] ThingSmartSceneProtocol service not available")
+                result(FlutterError(
+                    code: "SERVICE_NOT_AVAILABLE",
+                    message: "Scene service not available. Make sure Scene BizBundle is properly installed.",
+                    details: nil
+                ))
+                return
+            }
+            
+            NSLog("✅ [iOS-NSLog] ThingSmartSceneProtocol service found, opening scene list")
+            
+            // Open scene list/management UI
+            // The Scene BizBundle provides gotoSceneViewController for opening scene management
+            sceneService.gotoSceneViewController()
+            
+            NSLog("✅ [iOS-NSLog] Scene UI launched successfully")
             
             // Return success immediately
             result(nil)

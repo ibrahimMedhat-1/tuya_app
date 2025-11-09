@@ -41,6 +41,7 @@ target 'Runner' do
   pod 'ThingSmartBusinessExtensionKit', '~> 6.7.0'
   pod 'ThingSmartActivatorBizBundle'
   pod 'ThingSmartPanelBizBundle'
+  pod 'ThingSmartSceneBizBundle', '~> 6.7.0'
   pod 'ThingSmartBusinessExtensionKitBLEExtra','~> 6.7.0'
   
   target 'RunnerTests' do

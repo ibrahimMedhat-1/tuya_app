@@ -90,3 +90,33 @@
 -keep class com.thingclips.smart.panel.react_native.** { *; }
 -dontwarn com.thingclips.smart.android.common.download.**
 -dontwarn com.thingclips.smart.panel.download.**
+
+# ═══════════════════════════════════════════════════════════════════
+# Missing classes - ignore warnings for optional dependencies
+# ═══════════════════════════════════════════════════════════════════
+
+# Alibaba FastJSON optional dependencies
+-dontwarn com.alibaba.fastjson2.support.odps.**
+-dontwarn com.alibaba.fastjson2.support.AwtRederModule**
+-dontwarn com.alibaba.fastjson2.support.redission.**
+-dontwarn com.alibaba.fastjson2.support.retrofit.**
+
+# Google Play Core (optional for split installs)
+-dontwarn com.google.android.play.core.**
+-dontwarn io.flutter.embedding.android.FlutterPlayStoreSplitApplication
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**
+
+# Huawei HMS (optional)
+-dontwarn com.huawei.**
+-dontwarn com.huawei.hms.**
+-dontwarn com.huawei.hianalytics.**
+-dontwarn com.huawei.libcore.io.**
+
+# Java AWT (not available on Android)
+-dontwarn java.awt.**
+
+# Redisson (optional)
+-dontwarn org.redisson.**
+
+# Retrofit (optional)
+-dontwarn retrofit2.**
