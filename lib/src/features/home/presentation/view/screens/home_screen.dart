@@ -525,7 +525,7 @@ class HomeScreen extends StatelessWidget {
     return BlocBuilder<HomeCubit, HomeState>(
       builder: (context, state) {
         return GestureDetector(
-          onTap: () => context.watch<HomeCubit>().pairDevices(),
+          onTap: () => context.read<HomeCubit>().pairDevices(),
           child: Container(
             width: size,
             height: size,
