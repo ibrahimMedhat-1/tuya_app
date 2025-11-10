@@ -5565,6 +5565,7 @@ PODS:
   - ThingSmartUtil (5.17.1.3):
     - ThingMbedtls (= 3.5.2)
     - ThingOpenSSLSDK (~> 1.1.1-t.0)
+    - ThingSmartCryption (~> 5.0)
   - ThingSocialAPI (1.0.5)
   - ThingSocialModule (5.0.7):
     - ThingFoundationKit
@@ -7592,14 +7593,14 @@ SPEC CHECKSUMS:
   ATGestureLockView: 85735681cb8175f592b4b8cf34f58ce111ff59b4
   boost-for-react-native: 39c7adb57c4e60d6c5479dd8623128eb5b3f0f2c
   CocoaLumberjack: 5644158777912b7de7469fa881f8a3f259c2512a
-  connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
+  connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   DACircularProgress: 4dd437c0fc3da5161cb289e07ac449493d41db71
   DingDangSDK: 4d04fb94076fe3df798a399c6fb73ce5f921fcd9
   DoubleConversion: e22e0762848812a87afd67ffda3998d9ef29170c
   dsBridge: 57c143231959462a85aaab420ef640fb1edd40bc
   EZAudio: af107055a882839106e0bf94611ec8d4ae466766
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_native_splash: df59bb2e1421aa0282cb2e95618af4dcb0c56c29
+  flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
   FMDB: 728731dd336af3936ce00f91d9d8495f5718a0e6
   Folly: 84f8ff044a47e8eb6db65c2d4e5b3a371f93c42a
   glog: 9e1007f274fe6f9bf1d4a09878f690ca6dd59bd8
@@ -7635,9 +7636,9 @@ SPEC CHECKSUMS:
   MJRefresh: ff9e531227924c84ce459338414550a05d2aea78
   MMKV: 1a98e8d019dd06023091ea48b49b7506fee381a8
   MMKVCore: c24975f7f2532fa96567ae9d2e91bea1256f4a84
-  network_info_plus: 6613d9d7cdeb0e6f366ed4dbe4b3c51c52d567a9
+  network_info_plus: cf61925ab5205dce05a4f0895989afdb6aade5fc
   OpenCV: 52cd4d72ff29e2be83421477aec5447320b7fb19
-  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
+  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   Protobuf: 164aea2ae380c3951abdc3e195220c01d17400e0
   React: 15fd7f0f3d45cd17579adda219ac2f34870bf3e4
   react-native-blur: 4996db8b62f00beedfa7f49dc3b436401ed31575
@@ -7973,7 +7974,7 @@ SPEC CHECKSUMS:
   ThingSmartTimerKit: 092435bef111dc7f2086e015643641e7e984bdcd
   ThingSmartUIConfigServices: 1fa5bb5e8d040b5259092f00d2b3cef772019bd2
   ThingSmartUserCenterPlugAPI: 12fb8bd0e6d1f9c49421acd9de21be1fdb6346fb
-  ThingSmartUtil: 4d6438fdb86b6dd7af3369ed52a250ccfbbe4abd
+  ThingSmartUtil: ba46fa8b8b98aa7550c08fee97cde0a9d870f5c0
   ThingSocialAPI: 6cf49d58c345439d2348ad6ae173404c7e310f95
   ThingSocialModule: 6091bda7101f0eab0f05ac2de91b637aba9d8c5a
   ThingSocketPing: 73e9554b082fe0b714f2155a024576810aee20cf
