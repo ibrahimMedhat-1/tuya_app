@@ -9,8 +9,16 @@ class DeviceCard extends StatefulWidget {
   final bool isLoading;
   final int? homeId;
   final String? homeName;
+  final VoidCallback? onLongPress;
 
-  const DeviceCard({super.key, required this.device, this.isLoading = false, this.homeId, this.homeName});
+  const DeviceCard({
+    super.key,
+    required this.device,
+    this.isLoading = false,
+    this.homeId,
+    this.homeName,
+    this.onLongPress,
+  });
 
   @override
   State<DeviceCard> createState() => _DeviceCardState();
@@ -33,6 +41,7 @@ class _DeviceCardState extends State<DeviceCard> {
         color: Colors.transparent,
         child: InkWell(
           onTap: _handleCardTap,
+          onLongPress: widget.onLongPress,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: EdgeInsets.all(context.isMobile ? 16 : 14),

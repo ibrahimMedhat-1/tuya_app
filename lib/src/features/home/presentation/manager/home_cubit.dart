@@ -81,7 +81,11 @@ class HomeCubit extends Cubit<HomeState> {
         ),
       ),
       (devices) => emit(
-        state.copyWith(status: HomeStatus.devicesLoaded, devices: devices),
+        state.copyWith(
+          status: HomeStatus.devicesLoaded,
+          devices: devices,
+          allHomeDevices: devices, // Store all devices
+        ),
       ),
     );
   }
@@ -131,6 +135,8 @@ class HomeCubit extends Cubit<HomeState> {
           status: HomeStatus.devicesLoaded,
           devices: devices,
           selectedRoomId: roomId,
+          // Preserve allHomeDevices when selecting a room
+          allHomeDevices: state.allHomeDevices,
         ),
       ),
     );
@@ -158,7 +164,27 @@ class HomeCubit extends Cubit<HomeState> {
         state.copyWith(
           status: HomeStatus.devicesLoaded,
           devices: devices,
+          allHomeDevices: devices, // Store all devices
           selectedRoomId: null,
+        ),
+      ),
+    );
+  }
+
+  /// Load all home devices without clearing room selection (for add device dialog)
+  Future<void> loadAllHomeDevicesForDialog(int homeId) async {
+    final result = await _getHomeDevices(homeId);
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: HomeStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (devices) => emit(
+        state.copyWith(
+          // Don't change status or clear room selection, just update allHomeDevices
+          allHomeDevices: devices,
         ),
       ),
     );
@@ -286,12 +312,12 @@ class HomeCubit extends Cubit<HomeState> {
         ),
       ),
       (_) async {
+        // Reload all home devices first to update allHomeDevices
+        await loadAllHomeDevicesForDialog(homeId);
+        
         // Reload room devices to reflect changes
         if (state.selectedRoomId == roomId) {
           await selectRoom(homeId, roomId);
-        } else {
-          // Just reload all devices
-          await loadAllHomeDevices(homeId);
         }
       },
     );
@@ -315,12 +341,12 @@ class HomeCubit extends Cubit<HomeState> {
         ),
       ),
       (_) async {
+        // Reload all home devices first to update allHomeDevices
+        await loadAllHomeDevicesForDialog(homeId);
+        
         // Reload room devices to reflect changes
         if (state.selectedRoomId == roomId) {
           await selectRoom(homeId, roomId);
-        } else {
-          // Just reload all devices
-          await loadAllHomeDevices(homeId);
         }
       },
     );

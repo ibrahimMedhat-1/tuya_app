@@ -986,117 +986,260 @@ class MainActivity : FlutterActivity() {
     }
 
     // Room Management Methods
+    // Based on Tuya SDK patterns - using home instance methods for room management
 
     private fun addDeviceToRoom(homeId: Long, roomId: Long, deviceId: String, result: MethodChannel.Result) {
         Log.d("TuyaSDK", "➕ Adding device $deviceId to room $roomId in home $homeId")
         
+        // Per Tuya docs: Use newRoomInstance and call addDevice on the Room
+        try {
+            // Try ThingHomeSdk.newRoomInstance (Tuya SDK naming convention)
+            val roomInstanceMethod = ThingHomeSdk::class.java.getMethod("newRoomInstance", Long::class.javaPrimitiveType)
+            val room = roomInstanceMethod.invoke(null, roomId)
+            
+            if (room != null) {
+                val addDeviceMethod = room.javaClass.getMethod("addDevice", String::class.java, IResultCallback::class.java)
+                addDeviceMethod.invoke(room, deviceId, object : IResultCallback {
+                    override fun onSuccess() {
+                        Log.d("TuyaSDK", "✅ Device $deviceId added to room $roomId successfully")
+                        result.success(null)
+                    }
+                    
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "❌ Failed to add device to room: $error")
+                        result.error(code ?: "ADD_DEVICE_TO_ROOM_FAILED", error ?: "Failed to add device to room", null)
+                    }
+                })
+                return
+            }
+        } catch (e: NoSuchMethodException) {
+            Log.d("TuyaSDK", "newRoomInstance not found, trying home instance method...")
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Room instance approach failed: ${e.message}")
+        }
+        
+        // Fallback: Try home instance with single deviceId
         val home = ThingHomeSdk.newHomeInstance(homeId)
-        if (home == null) {
-            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
-            result.error("HOME_NOT_FOUND", "Home not found", null)
-            return
+        try {
+            val method = home.javaClass.getMethod(
+                "addDeviceToRoom",
+                Long::class.javaPrimitiveType,
+                String::class.java,
+                IResultCallback::class.java
+            )
+            method.invoke(home, roomId, deviceId, object : IResultCallback {
+                override fun onSuccess() {
+                    Log.d("TuyaSDK", "✅ Device $deviceId added to room $roomId successfully")
+                    result.success(null)
+                }
+                
+                override fun onError(code: String?, error: String?) {
+                    Log.e("TuyaSDK", "❌ Failed to add device to room: $error")
+                    result.error(code ?: "ADD_DEVICE_TO_ROOM_FAILED", error ?: "Failed to add device to room", null)
+                }
+            })
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "❌ All methods failed: ${e.message}")
+            Log.e("TuyaSDK", "❌ Stack trace: ${e.stackTraceToString()}")
+            result.error(
+                "NOT_IMPLEMENTED",
+                "Room management not supported by this SDK version. Error: ${e.message}",
+                null
+            )
         }
-
-        val room = home.getRoom(roomId)
-        if (room == null) {
-            Log.e("TuyaSDK", "❌ Room not found for ID: $roomId")
-            result.error("ROOM_NOT_FOUND", "Room not found", null)
-            return
-        }
-
-        room.addDevice(deviceId, object : IResultCallback {
-            override fun onSuccess() {
-                Log.d("TuyaSDK", "✅ Device $deviceId added to room $roomId successfully")
-                result.success(null)
-            }
-
-            override fun onError(code: String?, error: String?) {
-                Log.e("TuyaSDK", "❌ Failed to add device to room: $error")
-                result.error(code ?: "ADD_DEVICE_TO_ROOM_FAILED", error ?: "Failed to add device to room", null)
-            }
-        })
     }
 
     private fun removeDeviceFromRoom(homeId: Long, roomId: Long, deviceId: String, result: MethodChannel.Result) {
         Log.d("TuyaSDK", "➖ Removing device $deviceId from room $roomId in home $homeId")
         
+        // Try Room instance approach first
+        try {
+            val roomInstanceMethod = ThingHomeSdk::class.java.getMethod("newRoomInstance", Long::class.javaPrimitiveType)
+            val room = roomInstanceMethod.invoke(null, roomId)
+            
+            if (room != null) {
+                val removeDeviceMethod = room.javaClass.getMethod("removeDevice", String::class.java, IResultCallback::class.java)
+                removeDeviceMethod.invoke(room, deviceId, object : IResultCallback {
+                    override fun onSuccess() {
+                        Log.d("TuyaSDK", "✅ Device $deviceId removed from room $roomId successfully")
+                        result.success(null)
+                    }
+                    
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "❌ Failed to remove device from room: $error")
+                        result.error(code ?: "REMOVE_DEVICE_FROM_ROOM_FAILED", error ?: "Failed to remove device from room", null)
+                    }
+                })
+                return
+            }
+        } catch (e: NoSuchMethodException) {
+            Log.d("TuyaSDK", "newRoomInstance not found, trying home instance method...")
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "Room instance approach failed: ${e.message}")
+        }
+        
+        // Fallback: Try home instance
         val home = ThingHomeSdk.newHomeInstance(homeId)
-        if (home == null) {
-            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
-            result.error("HOME_NOT_FOUND", "Home not found", null)
-            return
+        try {
+            val method = home.javaClass.getMethod(
+                "removeDeviceFromRoom",
+                Long::class.javaPrimitiveType,
+                String::class.java,
+                IResultCallback::class.java
+            )
+            method.invoke(home, roomId, deviceId, object : IResultCallback {
+                override fun onSuccess() {
+                    Log.d("TuyaSDK", "✅ Device $deviceId removed from room $roomId successfully")
+                    result.success(null)
+                }
+                
+                override fun onError(code: String?, error: String?) {
+                    Log.e("TuyaSDK", "❌ Failed to remove device from room: $error")
+                    result.error(code ?: "REMOVE_DEVICE_FROM_ROOM_FAILED", error ?: "Failed to remove device from room", null)
+                }
+            })
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "❌ All methods failed: ${e.message}")
+            result.error(
+                "NOT_IMPLEMENTED",
+                "Room management not supported by this SDK version. Error: ${e.message}",
+                null
+            )
         }
-
-        val room = home.getRoom(roomId)
-        if (room == null) {
-            Log.e("TuyaSDK", "❌ Room not found for ID: $roomId")
-            result.error("ROOM_NOT_FOUND", "Room not found", null)
-            return
-        }
-
-        room.removeDevice(deviceId, object : IResultCallback {
-            override fun onSuccess() {
-                Log.d("TuyaSDK", "✅ Device $deviceId removed from room $roomId successfully")
-                result.success(null)
-            }
-
-            override fun onError(code: String?, error: String?) {
-                Log.e("TuyaSDK", "❌ Failed to remove device from room: $error")
-                result.error(code ?: "REMOVE_DEVICE_FROM_ROOM_FAILED", error ?: "Failed to remove device from room", null)
-            }
-        })
     }
 
     private fun updateRoomName(homeId: Long, roomId: Long, name: String, result: MethodChannel.Result) {
         Log.d("TuyaSDK", "✏️ Updating room $roomId name to: $name")
         
-        val home = ThingHomeSdk.newHomeInstance(homeId)
-        if (home == null) {
-            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
-            result.error("HOME_NOT_FOUND", "Home not found", null)
-            return
-        }
-
-        val room = home.getRoom(roomId)
-        if (room == null) {
-            Log.e("TuyaSDK", "❌ Room not found for ID: $roomId")
-            result.error("ROOM_NOT_FOUND", "Room not found", null)
-            return
-        }
-
-        room.updateRoom(name, object : IResultCallback {
-            override fun onSuccess() {
-                Log.d("TuyaSDK", "✅ Room $roomId name updated to: $name")
-                result.success(null)
+        // Try approach 1: TuyaHomeSdk.getRoomInstance(roomId).updateRoom(newName, callback)
+        try {
+            val getRoomInstanceMethod = ThingHomeSdk::class.java.getMethod("getRoomInstance", Long::class.javaPrimitiveType)
+            val room = getRoomInstanceMethod.invoke(null, roomId)
+            
+            if (room != null) {
+                try {
+                    val updateMethod = room.javaClass.getMethod("updateRoom", String::class.java, IResultCallback::class.java)
+                    updateMethod.invoke(room, name, object : IResultCallback {
+                        override fun onSuccess() {
+                            Log.d("TuyaSDK", "✅ Room $roomId name updated to: $name")
+                            result.success(null)
+                        }
+                        
+                        override fun onError(code: String?, error: String?) {
+                            Log.e("TuyaSDK", "❌ Failed to update room name: $error")
+                            result.error(code ?: "UPDATE_ROOM_NAME_FAILED", error ?: "Failed to update room name", null)
+                        }
+                    })
+                    return
+                } catch (e: Exception) {
+                    Log.d("TuyaSDK", "getRoomInstance.updateRoom failed: ${e.message}")
+                }
             }
-
-            override fun onError(code: String?, error: String?) {
-                Log.e("TuyaSDK", "❌ Failed to update room name: $error")
-                result.error(code ?: "UPDATE_ROOM_NAME_FAILED", error ?: "Failed to update room name", null)
+        } catch (e: Exception) {
+            Log.d("TuyaSDK", "getRoomInstance not available: ${e.message}")
+        }
+        
+        // Try approach 2: ThingHomeSdk.newRoomInstance(roomId).updateRoom(newName, callback)
+        try {
+            val newRoomInstanceMethod = ThingHomeSdk::class.java.getMethod("newRoomInstance", Long::class.javaPrimitiveType)
+            val room = newRoomInstanceMethod.invoke(null, roomId)
+            
+            if (room != null) {
+                try {
+                    val updateMethod = room.javaClass.getMethod("updateRoom", String::class.java, IResultCallback::class.java)
+                    updateMethod.invoke(room, name, object : IResultCallback {
+                        override fun onSuccess() {
+                            Log.d("TuyaSDK", "✅ Room $roomId name updated to: $name")
+                            result.success(null)
+                        }
+                        
+                        override fun onError(code: String?, error: String?) {
+                            Log.e("TuyaSDK", "❌ Failed to update room name: $error")
+                            result.error(code ?: "UPDATE_ROOM_NAME_FAILED", error ?: "Failed to update room name", null)
+                        }
+                    })
+                    return
+                } catch (e: Exception) {
+                    Log.d("TuyaSDK", "newRoomInstance.updateRoom failed: ${e.message}")
+                }
             }
-        })
+        } catch (e: Exception) {
+            Log.d("TuyaSDK", "newRoomInstance not available: ${e.message}")
+        }
+        
+        // Try approach 3: ThingHomeSdk.getHomeManagerInstance().updateRoom(roomId, newName, callback)
+        try {
+            val homeManager = ThingHomeSdk.getHomeManagerInstance()
+            val updateMethod = homeManager.javaClass.getMethod(
+                "updateRoom",
+                Long::class.javaPrimitiveType,
+                String::class.java,
+                IResultCallback::class.java
+            )
+            updateMethod.invoke(homeManager, roomId, name, object : IResultCallback {
+                override fun onSuccess() {
+                    Log.d("TuyaSDK", "✅ Room $roomId name updated to: $name")
+                    result.success(null)
+                }
+                
+                override fun onError(code: String?, error: String?) {
+                    Log.e("TuyaSDK", "❌ Failed to update room name: $error")
+                    result.error(code ?: "UPDATE_ROOM_NAME_FAILED", error ?: "Failed to update room name", null)
+                }
+            })
+            return
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "❌ All room update methods failed: ${e.message}")
+        }
+        
+        result.error(
+            "NOT_IMPLEMENTED",
+            "Room rename not supported by this SDK version. All known methods failed.",
+            null
+        )
     }
 
     private fun removeRoom(homeId: Long, roomId: Long, result: MethodChannel.Result) {
         Log.d("TuyaSDK", "🗑️ Removing room $roomId from home $homeId")
         
         val home = ThingHomeSdk.newHomeInstance(homeId)
-        if (home == null) {
-            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
-            result.error("HOME_NOT_FOUND", "Home not found", null)
-            return
+        
+        // Try removeRoom first, then dismissRoom as fallback
+        try {
+            home.removeRoom(roomId, object : IResultCallback {
+                override fun onSuccess() {
+                    Log.d("TuyaSDK", "✅ Room $roomId removed successfully")
+                    result.success(null)
+                }
+                
+                override fun onError(code: String?, error: String?) {
+                    Log.e("TuyaSDK", "❌ Failed to remove room: $error")
+                    result.error(code ?: "REMOVE_ROOM_FAILED", error ?: "Failed to remove room", null)
+                }
+            })
+        } catch (e: NoSuchMethodError) {
+            // Fallback to dismissRoom if removeRoom doesn't exist
+            try {
+                val method = home.javaClass.getMethod("dismissRoom", Long::class.java, IResultCallback::class.java)
+                method.invoke(home, roomId, object : IResultCallback {
+                    override fun onSuccess() {
+                        Log.d("TuyaSDK", "✅ Room $roomId removed successfully")
+                        result.success(null)
+                    }
+                    
+                    override fun onError(code: String?, error: String?) {
+                        Log.e("TuyaSDK", "❌ Failed to remove room: $error")
+                        result.error(code ?: "REMOVE_ROOM_FAILED", error ?: "Failed to remove room", null)
+                    }
+                })
+            } catch (e2: Exception) {
+                Log.e("TuyaSDK", "❌ Both removeRoom and dismissRoom not found: ${e2.message}")
+                result.error(
+                    "NOT_IMPLEMENTED",
+                    "Room removal method not available in this SDK version. SDK may need update.",
+                    null
+                )
+            }
         }
-
-        home.removeRoom(roomId, object : IResultCallback {
-            override fun onSuccess() {
-                Log.d("TuyaSDK", "✅ Room $roomId removed successfully")
-                result.success(null)
-            }
-
-            override fun onError(code: String?, error: String?) {
-                Log.e("TuyaSDK", "❌ Failed to remove room: $error")
-                result.error(code ?: "REMOVE_ROOM_FAILED", error ?: "Failed to remove room", null)
-            }
-        })
     }
 }

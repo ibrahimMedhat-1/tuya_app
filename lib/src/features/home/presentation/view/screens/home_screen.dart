@@ -5,7 +5,9 @@ import 'package:tuya_app/src/core/helpers/responsive_extensions.dart';
 import 'package:tuya_app/src/core/helpers/spacing_extensions.dart';
 import 'package:tuya_app/src/core/widgets/nav_icons_icons.dart';
 import 'package:tuya_app/src/features/auth/presentation/view/screens/me_screen.dart';
+import 'package:tuya_app/src/features/home/domain/entities/device.dart';
 import 'package:tuya_app/src/features/home/domain/entities/home.dart';
+import 'package:tuya_app/src/features/home/domain/entities/room.dart';
 import 'package:tuya_app/src/features/home/presentation/manager/home_cubit.dart';
 import 'package:tuya_app/src/features/home/presentation/view/widgets/device_card.dart';
 import 'package:tuya_app/src/features/home/presentation/view/widgets/room_card.dart';
@@ -76,21 +78,34 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Pinned Home Selector
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _PinnedHeaderDelegate(
-                    minExtentHeight: context.isMobile ? 64 : 76,
-                    maxExtentHeight: context.isMobile ? 72 : 84,
-                    child: Container(
-                      color: Colors.white,
-                      padding: EdgeInsets.only(
-                        top: 8,
-                        bottom: 8,
-                        left: context.responsivePadding.horizontal / 2,
-                        right: context.responsivePadding.horizontal / 2,
-                      ),
-                      child: _buildHomeSelector(context, state),
+                // Compact Home Selector (less prominent)
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: EdgeInsets.symmetric(
+                      horizontal: context.responsivePadding.horizontal,
+                      vertical: 8,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: context.responsivePadding.horizontal / 2,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.home_outlined,
+                          color: Colors.grey.shade600,
+                          size: 20,
+                        ),
+                        8.width,
+                        Expanded(
+                          child: _buildCompactHomeSelector(context, state),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -199,7 +214,7 @@ class HomeScreen extends StatelessWidget {
               ),
               4.height,
               Text(
-                'you have ${state.homes.length} Available Home.',
+                '${state.devices.length} connected device${state.devices.length != 1 ? 's' : ''} • ${state.rooms.length} room${state.rooms.length != 1 ? 's' : ''}',
                 style: TextStyle(
                   fontSize: 14 * context.responsiveFontMultiplier,
                   color: Colors.grey,
@@ -288,6 +303,10 @@ class HomeScreen extends StatelessWidget {
             itemCount: state.rooms.length,
             itemBuilder: (context, index) {
               final room = state.rooms[index];
+              final selectedHome = state.homes.firstWhere(
+                (home) => home.homeId == state.selectedHomeId,
+                orElse: () => state.homes.first,
+              );
               return RoomCard(
                 room: room,
                 isSelected: state.selectedRoomId == room.roomId,
@@ -297,6 +316,8 @@ class HomeScreen extends StatelessWidget {
                     room.roomId,
                   );
                 },
+                onRename: (room) => _showRenameRoomDialog(context, room, state.selectedHomeId ?? 0),
+                onDelete: (room) => _showDeleteRoomDialog(context, room, state.selectedHomeId ?? 0),
               );
             },
           ),
@@ -308,7 +329,7 @@ class HomeScreen extends StatelessWidget {
   List<Widget> _buildDevicesSlivers(BuildContext context, HomeState state) {
     final slivers = <Widget>[];
 
-    // Toggle header (All devices / Room devices)
+    // Toggle header (All devices / Room devices) + Add Device button
     if (state.selectedHomeId != null && state.rooms.isNotEmpty) {
       slivers.add(
         SliverToBoxAdapter(
@@ -317,71 +338,101 @@ class HomeScreen extends StatelessWidget {
               horizontal: context.responsivePadding.horizontal / 2,
               vertical: 8,
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      await context.read<HomeCubit>().loadAllHomeDevices(
-                        state.selectedHomeId!,
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: state.selectedRoomId == null
-                            ? Colors.green
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'All Devices',
-                        style: TextStyle(
-                          color: state.selectedRoomId == null
-                              ? Colors.white
-                              : Colors.grey.shade600,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14 * context.responsiveFontMultiplier,
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          await context.read<HomeCubit>().loadAllHomeDevices(
+                            state.selectedHomeId!,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: state.selectedRoomId == null
+                                ? Colors.green
+                                : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'All Devices',
+                            style: TextStyle(
+                              color: state.selectedRoomId == null
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14 * context.responsiveFontMultiplier,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    8.width,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (state.selectedRoomId == null &&
+                              state.rooms.isNotEmpty) {
+                            context.read<HomeCubit>().selectRoom(
+                              state.selectedHomeId!,
+                              state.rooms.first.roomId,
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: state.selectedRoomId != null
+                                ? Colors.green
+                                : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Room Devices',
+                            style: TextStyle(
+                              color: state.selectedRoomId != null
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14 * context.responsiveFontMultiplier,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Add Device button when room is selected
+                if (state.selectedRoomId != null) ...[
+                  12.height,
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showAddDeviceToRoomDialog(context, state),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 20),
+                      label: Text(
+                        'Add Device to Room',
+                        style: TextStyle(
+                          fontSize: 15 * context.responsiveFontMultiplier,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                8.width,
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      if (state.selectedRoomId == null &&
-                          state.rooms.isNotEmpty) {
-                        context.read<HomeCubit>().selectRoom(
-                          state.selectedHomeId!,
-                          state.rooms.first.roomId,
-                        );
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: state.selectedRoomId != null
-                            ? Colors.green
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Room Devices',
-                        style: TextStyle(
-                          color: state.selectedRoomId != null
-                              ? Colors.white
-                              : Colors.grey.shade600,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14 * context.responsiveFontMultiplier,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ),
+                ],
               ],
             ),
           ),
@@ -417,6 +468,14 @@ class HomeScreen extends StatelessWidget {
                 device: device,
                 homeId: state.selectedHomeId,
                 homeName: selectedHome.name,
+                onLongPress: state.selectedRoomId != null
+                    ? () => _showRemoveDeviceFromRoomDialog(
+                          context,
+                          device,
+                          state.selectedRoomId!,
+                          state.selectedHomeId ?? 0,
+                        )
+                    : null,
               );
             }, childCount: state.devices.length),
           ),
@@ -631,6 +690,47 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompactHomeSelector(BuildContext context, HomeState state) {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<int>(
+        isExpanded: true,
+        isDense: true,
+        value: state.selectedHomeId ??
+            (state.homes.isNotEmpty ? state.homes.first.homeId : null),
+        hint: Text(
+          'Select Home',
+          style: TextStyle(
+            fontSize: 14 * context.responsiveFontMultiplier,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        items: state.homes
+            .map(
+              (HomeEntity h) => DropdownMenuItem<int>(
+                value: h.homeId,
+                child: Text(
+                  h.name,
+                  style: TextStyle(
+                    fontSize: 14 * context.responsiveFontMultiplier,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (value) async {
+          if (value != null) {
+            await context.read<HomeCubit>().loadRooms(value);
+
+            if (context.mounted) {
+              context.read<HomeCubit>().loadAllHomeDevices(value);
+            }
+          }
+        },
       ),
     );
   }
@@ -1318,6 +1418,255 @@ class HomeScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  void _showRenameRoomDialog(BuildContext context, RoomEntity room, int homeId) {
+    final controller = TextEditingController(text: room.name);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Rename Room'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Room Name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                Navigator.of(dialogContext).pop();
+                context.read<HomeCubit>().updateRoomName(
+                      homeId: homeId,
+                      roomId: room.roomId,
+                      name: controller.text.trim(),
+                    );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Room renamed successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteRoomDialog(BuildContext context, RoomEntity room, int homeId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Room'),
+        content: Text(
+          'Are you sure you want to delete "${room.name}"?\n\nDevices in this room will not be deleted, just unassigned from the room.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<HomeCubit>().deleteRoom(
+                    homeId: homeId,
+                    roomId: room.roomId,
+                  );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Room deleted successfully'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddDeviceToRoomDialog(BuildContext context, HomeState state) {
+    if (state.selectedRoomId == null || state.selectedHomeId == null) return;
+
+    final cubit = context.read<HomeCubit>();
+    final selectedRoomId = state.selectedRoomId!;
+    final selectedHomeId = state.selectedHomeId!;
+
+    // Load all home devices first (without clearing room selection)
+    cubit.loadAllHomeDevicesForDialog(selectedHomeId);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: cubit,
+        child: AlertDialog(
+          title: const Text('Add Device to Room'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: BlocBuilder<HomeCubit, HomeState>(
+              builder: (context, state) {
+                // Get all devices from the home
+                final allDevices = state.allHomeDevices ?? [];
+                
+                // If allHomeDevices is empty, try loading it
+                if (allDevices.isEmpty && state.selectedHomeId == selectedHomeId) {
+                  // Load all devices in the background
+                  Future.microtask(() {
+                    cubit.loadAllHomeDevicesForDialog(selectedHomeId);
+                  });
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                // Filter out devices already in the selected room
+                // Get current room devices from state.devices (which are room devices when room is selected)
+                final roomDeviceIds = state.devices.map((d) => d.deviceId).toSet();
+                final availableDevices = allDevices.where((device) {
+                  return !roomDeviceIds.contains(device.deviceId);
+                }).toList();
+
+                if (availableDevices.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.devices_other, size: 48, color: Colors.grey.shade400),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No available devices to add',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'All devices are already in this room',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: availableDevices.length,
+                  itemBuilder: (context, index) {
+                    final device = availableDevices[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.green.shade100,
+                        child: Icon(
+                          Icons.devices,
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                      title: Text(device.name),
+                      subtitle: Text(
+                        device.isOnline ? 'Online' : 'Offline',
+                        style: TextStyle(
+                          color: device.isOnline ? Colors.green : Colors.grey,
+                        ),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.add_circle, color: Colors.green),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.read<HomeCubit>().addDeviceToRoom(
+                                homeId: state.selectedHomeId!,
+                                roomId: state.selectedRoomId!,
+                                deviceId: device.deviceId,
+                              );
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Device added to room'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRemoveDeviceFromRoomDialog(
+    BuildContext context,
+    DeviceEntity device,
+    int roomId,
+    int homeId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove Device'),
+        content: Text('Remove "${device.name}" from this room?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context.read<HomeCubit>().removeDeviceFromRoom(
+                    homeId: homeId,
+                    roomId: roomId,
+                    deviceId: device.deviceId,
+                  );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Device removed from room'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
     );
   }
 }

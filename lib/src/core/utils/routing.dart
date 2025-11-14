@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tuya_app/src/features/home/presentation/view/screens/home_screen.dart';
+import 'package:tuya_app/src/features/home/presentation/view/screens/room_details_screen.dart';
 import 'package:tuya_app/src/features/auth/presentation/view/screens/register_screen.dart';
 
 import 'app_imports.dart' show LoginScreen;
@@ -8,6 +9,7 @@ abstract class Routes {
   static const String homeRoute = 'home';
   static const String loginRoute = 'login';
   static const String registerRoute = 'register';
+  static const String roomDetailsRoute = 'room-details';
   static const String controlDeviceRoute = 'control-devices';
 }
 
@@ -23,6 +25,15 @@ class RouteGenerator {
       case Routes.registerRoute:
         return MaterialPageRoute(
           builder: (_) => const RegisterScreen(),
+        );
+      case Routes.roomDetailsRoute:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => RoomDetailsScreen(
+            room: args['room'],
+            homeId: args['homeId'],
+            homeName: args['homeName'],
+          ),
         );
       // case Routes.controlDeviceRoute:
       //   return MaterialPageRoute(builder: (_) => ControlDeviceScreen());

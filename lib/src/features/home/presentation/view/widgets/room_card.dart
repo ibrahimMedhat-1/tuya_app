@@ -6,12 +6,18 @@ class RoomCard extends StatelessWidget {
   final RoomEntity room;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final Function(RoomEntity)? onRename;
+  final Function(RoomEntity)? onDelete;
 
   const RoomCard({
     super.key,
     required this.room,
     required this.isSelected,
     required this.onTap,
+    this.onLongPress,
+    this.onRename,
+    this.onDelete,
   });
 
   @override
@@ -39,6 +45,13 @@ class RoomCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: () {
+        if (onLongPress != null) {
+          onLongPress!();
+        } else {
+          _showRoomMenu(context);
+        }
+      },
       child: Container(
         width: cardSize,
         height: cardSize,
@@ -111,5 +124,51 @@ class RoomCard extends StatelessWidget {
     } else {
       return Icons.room;
     }
+  }
+
+  void _showRoomMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit, color: Colors.blue),
+              title: const Text('Rename Room'),
+              onTap: () {
+                Navigator.pop(context);
+                if (onRename != null) {
+                  onRename!(room);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Delete Room'),
+              onTap: () {
+                Navigator.pop(context);
+                if (onDelete != null) {
+                  onDelete!(room);
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 }

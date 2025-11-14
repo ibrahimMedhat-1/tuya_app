@@ -14,6 +14,7 @@ class HomeState {
   final HomeStatus status;
   final List<HomeEntity> homes;
   final List<DeviceEntity> devices;
+  final List<DeviceEntity>? allHomeDevices; // All devices in the home (not filtered by room)
   final List<RoomEntity> rooms;
   final int? selectedHomeId;
   final int? selectedRoomId;
@@ -24,6 +25,7 @@ class HomeState {
     required this.status,
     required this.homes,
     required this.devices,
+    this.allHomeDevices,
     required this.rooms,
     required this.selectedHomeId,
     required this.selectedRoomId,
@@ -49,6 +51,7 @@ class HomeState {
     HomeStatus? status,
     List<HomeEntity>? homes,
     List<DeviceEntity>? devices,
+    Object? allHomeDevices = _unset,
     List<RoomEntity>? rooms,
     Object? selectedHomeId = _unset,
     Object? selectedRoomId = _unset,
@@ -59,6 +62,9 @@ class HomeState {
       status: status ?? this.status,
       homes: homes ?? this.homes,
       devices: devices ?? this.devices,
+      allHomeDevices: identical(allHomeDevices, _unset)
+          ? this.allHomeDevices
+          : allHomeDevices as List<DeviceEntity>?,
       rooms: rooms ?? this.rooms,
       selectedHomeId: identical(selectedHomeId, _unset)
           ? this.selectedHomeId
