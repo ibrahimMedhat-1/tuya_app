@@ -48,6 +48,18 @@ Future<void> getItInit() async {
   sl.registerLazySingleton<PairDeviceUseCase>(
     () => PairDeviceUseCase(sl<HomeRepository>()),
   );
+  sl.registerLazySingleton<AddDeviceToRoomUseCase>(
+    () => AddDeviceToRoomUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<RemoveDeviceFromRoomUseCase>(
+    () => RemoveDeviceFromRoomUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<UpdateRoomNameUseCase>(
+    () => UpdateRoomNameUseCase(sl<HomeRepository>()),
+  );
+  sl.registerLazySingleton<RemoveRoomUseCase>(
+    () => RemoveRoomUseCase(sl<HomeRepository>()),
+  );
   sl.registerFactory<HomeCubit>(
     () => HomeCubit(
       sl<GetUserHomesUseCase>(),
@@ -58,6 +70,10 @@ Future<void> getItInit() async {
       sl<AddRoomUseCase>(),
       sl<ControlDeviceUseCase>(),
       sl<PairDeviceUseCase>(),
+      sl<AddDeviceToRoomUseCase>(),
+      sl<RemoveDeviceFromRoomUseCase>(),
+      sl<UpdateRoomNameUseCase>(),
+      sl<RemoveRoomUseCase>(),
     ),
   );
 }

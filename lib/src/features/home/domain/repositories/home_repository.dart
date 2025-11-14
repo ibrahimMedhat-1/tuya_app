@@ -33,4 +33,23 @@ abstract class HomeRepository {
     required Map<String, Object> dps,
   });
   Future<Either<Failure, void>> pairDevices();
+  Future<Either<Failure, void>> addDeviceToRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  });
+  Future<Either<Failure, void>> removeDeviceFromRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  });
+  Future<Either<Failure, void>> updateRoomName({
+    required int homeId,
+    required int roomId,
+    required String name,
+  });
+  Future<Either<Failure, void>> removeRoom({
+    required int homeId,
+    required int roomId,
+  });
 }

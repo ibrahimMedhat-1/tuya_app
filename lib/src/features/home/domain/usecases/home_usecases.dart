@@ -94,3 +94,65 @@ class PairDeviceUseCase {
 
   Future<Either<Failure, void>> call() => _repository.pairDevices();
 }
+
+class AddDeviceToRoomUseCase {
+  final HomeRepository _repository;
+
+  AddDeviceToRoomUseCase(this._repository);
+
+  Future<Either<Failure, void>> call({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) => _repository.addDeviceToRoom(
+    homeId: homeId,
+    roomId: roomId,
+    deviceId: deviceId,
+  );
+}
+
+class RemoveDeviceFromRoomUseCase {
+  final HomeRepository _repository;
+
+  RemoveDeviceFromRoomUseCase(this._repository);
+
+  Future<Either<Failure, void>> call({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) => _repository.removeDeviceFromRoom(
+    homeId: homeId,
+    roomId: roomId,
+    deviceId: deviceId,
+  );
+}
+
+class UpdateRoomNameUseCase {
+  final HomeRepository _repository;
+
+  UpdateRoomNameUseCase(this._repository);
+
+  Future<Either<Failure, void>> call({
+    required int homeId,
+    required int roomId,
+    required String name,
+  }) => _repository.updateRoomName(
+    homeId: homeId,
+    roomId: roomId,
+    name: name,
+  );
+}
+
+class RemoveRoomUseCase {
+  final HomeRepository _repository;
+
+  RemoveRoomUseCase(this._repository);
+
+  Future<Either<Failure, void>> call({
+    required int homeId,
+    required int roomId,
+  }) => _repository.removeRoom(
+    homeId: homeId,
+    roomId: roomId,
+  );
+}

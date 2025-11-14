@@ -15,6 +15,10 @@ class HomeCubit extends Cubit<HomeState> {
   final AddRoomUseCase _addRoom;
   final ControlDeviceUseCase _controlDeviceUseCase;
   final PairDeviceUseCase _pairDeviceUseCase;
+  final AddDeviceToRoomUseCase _addDeviceToRoomUseCase;
+  final RemoveDeviceFromRoomUseCase _removeDeviceFromRoomUseCase;
+  final UpdateRoomNameUseCase _updateRoomNameUseCase;
+  final RemoveRoomUseCase _removeRoomUseCase;
 
   HomeCubit(
     this._getUserHomes,
@@ -25,6 +29,10 @@ class HomeCubit extends Cubit<HomeState> {
     this._addRoom,
     this._controlDeviceUseCase,
     this._pairDeviceUseCase,
+    this._addDeviceToRoomUseCase,
+    this._removeDeviceFromRoomUseCase,
+    this._updateRoomNameUseCase,
+    this._removeRoomUseCase,
   ) : super(HomeState.initial());
 
   Future<void> loadHomes() async {
@@ -258,5 +266,113 @@ class HomeCubit extends Cubit<HomeState> {
 
   void selectBottomNavIndex(int index) {
     emit(state.copyWith(selectedBottomNavIndex: index));
+  }
+
+  Future<void> addDeviceToRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) async {
+    final result = await _addDeviceToRoomUseCase(
+      homeId: homeId,
+      roomId: roomId,
+      deviceId: deviceId,
+    );
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: HomeStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) async {
+        // Reload room devices to reflect changes
+        if (state.selectedRoomId == roomId) {
+          await selectRoom(homeId, roomId);
+        } else {
+          // Just reload all devices
+          await loadAllHomeDevices(homeId);
+        }
+      },
+    );
+  }
+
+  Future<void> removeDeviceFromRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) async {
+    final result = await _removeDeviceFromRoomUseCase(
+      homeId: homeId,
+      roomId: roomId,
+      deviceId: deviceId,
+    );
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: HomeStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) async {
+        // Reload room devices to reflect changes
+        if (state.selectedRoomId == roomId) {
+          await selectRoom(homeId, roomId);
+        } else {
+          // Just reload all devices
+          await loadAllHomeDevices(homeId);
+        }
+      },
+    );
+  }
+
+  Future<void> updateRoomName({
+    required int homeId,
+    required int roomId,
+    required String name,
+  }) async {
+    final result = await _updateRoomNameUseCase(
+      homeId: homeId,
+      roomId: roomId,
+      name: name,
+    );
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: HomeStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) async {
+        // Reload rooms to reflect name change
+        await loadRooms(homeId);
+      },
+    );
+  }
+
+  Future<void> deleteRoom({
+    required int homeId,
+    required int roomId,
+  }) async {
+    final result = await _removeRoomUseCase(
+      homeId: homeId,
+      roomId: roomId,
+    );
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          status: HomeStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
+      (_) async {
+        // Reload rooms to reflect deletion
+        await loadRooms(homeId);
+        // If the deleted room was selected, clear selection and load all devices
+        if (state.selectedRoomId == roomId) {
+          await loadAllHomeDevices(homeId);
+        }
+      },
+    );
   }
 }

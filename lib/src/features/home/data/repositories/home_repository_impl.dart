@@ -109,4 +109,54 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<Either<Failure, void>> pairDevices() async {
     return await _dataSource.pairDevices();
   }
+
+  @override
+  Future<Either<Failure, void>> addDeviceToRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) async {
+    return await _dataSource.addDeviceToRoom(
+      homeId: homeId,
+      roomId: roomId,
+      deviceId: deviceId,
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> removeDeviceFromRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) async {
+    return await _dataSource.removeDeviceFromRoom(
+      homeId: homeId,
+      roomId: roomId,
+      deviceId: deviceId,
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> updateRoomName({
+    required int homeId,
+    required int roomId,
+    required String name,
+  }) async {
+    return await _dataSource.updateRoomName(
+      homeId: homeId,
+      roomId: roomId,
+      name: name,
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> removeRoom({
+    required int homeId,
+    required int roomId,
+  }) async {
+    return await _dataSource.removeRoom(
+      homeId: homeId,
+      roomId: roomId,
+    );
+  }
 }

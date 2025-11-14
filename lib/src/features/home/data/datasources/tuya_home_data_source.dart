@@ -147,4 +147,78 @@ class TuyaHomeDataSource {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  Future<Either<Failure, void>> addDeviceToRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) async {
+    try {
+      await AppConstants.channel.invokeMethod('addDeviceToRoom', {
+        'homeId': homeId,
+        'roomId': roomId,
+        'deviceId': deviceId,
+      });
+      return const Right(null);
+    } on PlatformException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Failed to add device to room'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, void>> removeDeviceFromRoom({
+    required int homeId,
+    required int roomId,
+    required String deviceId,
+  }) async {
+    try {
+      await AppConstants.channel.invokeMethod('removeDeviceFromRoom', {
+        'homeId': homeId,
+        'roomId': roomId,
+        'deviceId': deviceId,
+      });
+      return const Right(null);
+    } on PlatformException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Failed to remove device from room'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, void>> updateRoomName({
+    required int homeId,
+    required int roomId,
+    required String name,
+  }) async {
+    try {
+      await AppConstants.channel.invokeMethod('updateRoomName', {
+        'homeId': homeId,
+        'roomId': roomId,
+        'name': name,
+      });
+      return const Right(null);
+    } on PlatformException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Failed to update room name'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, void>> removeRoom({
+    required int homeId,
+    required int roomId,
+  }) async {
+    try {
+      await AppConstants.channel.invokeMethod('removeRoom', {
+        'homeId': homeId,
+        'roomId': roomId,
+      });
+      return const Right(null);
+    } on PlatformException catch (e) {
+      return Left(ServerFailure(e.message ?? 'Failed to remove room'));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

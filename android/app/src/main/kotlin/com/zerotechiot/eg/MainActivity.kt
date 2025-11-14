@@ -192,6 +192,49 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
+                "addDeviceToRoom" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val roomId = call.argument<Int>("roomId")
+                    val deviceId = call.argument<String>("deviceId")
+                    if (homeId != null && roomId != null && deviceId != null) {
+                        addDeviceToRoom(homeId.toLong(), roomId.toLong(), deviceId, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId, roomId, and deviceId are required", null)
+                    }
+                }
+
+                "removeDeviceFromRoom" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val roomId = call.argument<Int>("roomId")
+                    val deviceId = call.argument<String>("deviceId")
+                    if (homeId != null && roomId != null && deviceId != null) {
+                        removeDeviceFromRoom(homeId.toLong(), roomId.toLong(), deviceId, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId, roomId, and deviceId are required", null)
+                    }
+                }
+
+                "updateRoomName" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val roomId = call.argument<Int>("roomId")
+                    val name = call.argument<String>("name")
+                    if (homeId != null && roomId != null && name != null) {
+                        updateRoomName(homeId.toLong(), roomId.toLong(), name, result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId, roomId, and name are required", null)
+                    }
+                }
+
+                "removeRoom" -> {
+                    val homeId = call.argument<Int>("homeId")
+                    val roomId = call.argument<Int>("roomId")
+                    if (homeId != null && roomId != null) {
+                        removeRoom(homeId.toLong(), roomId.toLong(), result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "homeId and roomId are required", null)
+                    }
+                }
+
                 else -> result.notImplemented()
             }
         }
@@ -940,5 +983,120 @@ class MainActivity : FlutterActivity() {
         super.onDestroy()
         // Clean up SDK resources when app is destroyed
         ThingHomeSdk.onDestroy()
+    }
+
+    // Room Management Methods
+
+    private fun addDeviceToRoom(homeId: Long, roomId: Long, deviceId: String, result: MethodChannel.Result) {
+        Log.d("TuyaSDK", "➕ Adding device $deviceId to room $roomId in home $homeId")
+        
+        val home = ThingHomeSdk.newHomeInstance(homeId)
+        if (home == null) {
+            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
+            result.error("HOME_NOT_FOUND", "Home not found", null)
+            return
+        }
+
+        val room = home.getRoom(roomId)
+        if (room == null) {
+            Log.e("TuyaSDK", "❌ Room not found for ID: $roomId")
+            result.error("ROOM_NOT_FOUND", "Room not found", null)
+            return
+        }
+
+        room.addDevice(deviceId, object : IResultCallback {
+            override fun onSuccess() {
+                Log.d("TuyaSDK", "✅ Device $deviceId added to room $roomId successfully")
+                result.success(null)
+            }
+
+            override fun onError(code: String?, error: String?) {
+                Log.e("TuyaSDK", "❌ Failed to add device to room: $error")
+                result.error(code ?: "ADD_DEVICE_TO_ROOM_FAILED", error ?: "Failed to add device to room", null)
+            }
+        })
+    }
+
+    private fun removeDeviceFromRoom(homeId: Long, roomId: Long, deviceId: String, result: MethodChannel.Result) {
+        Log.d("TuyaSDK", "➖ Removing device $deviceId from room $roomId in home $homeId")
+        
+        val home = ThingHomeSdk.newHomeInstance(homeId)
+        if (home == null) {
+            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
+            result.error("HOME_NOT_FOUND", "Home not found", null)
+            return
+        }
+
+        val room = home.getRoom(roomId)
+        if (room == null) {
+            Log.e("TuyaSDK", "❌ Room not found for ID: $roomId")
+            result.error("ROOM_NOT_FOUND", "Room not found", null)
+            return
+        }
+
+        room.removeDevice(deviceId, object : IResultCallback {
+            override fun onSuccess() {
+                Log.d("TuyaSDK", "✅ Device $deviceId removed from room $roomId successfully")
+                result.success(null)
+            }
+
+            override fun onError(code: String?, error: String?) {
+                Log.e("TuyaSDK", "❌ Failed to remove device from room: $error")
+                result.error(code ?: "REMOVE_DEVICE_FROM_ROOM_FAILED", error ?: "Failed to remove device from room", null)
+            }
+        })
+    }
+
+    private fun updateRoomName(homeId: Long, roomId: Long, name: String, result: MethodChannel.Result) {
+        Log.d("TuyaSDK", "✏️ Updating room $roomId name to: $name")
+        
+        val home = ThingHomeSdk.newHomeInstance(homeId)
+        if (home == null) {
+            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
+            result.error("HOME_NOT_FOUND", "Home not found", null)
+            return
+        }
+
+        val room = home.getRoom(roomId)
+        if (room == null) {
+            Log.e("TuyaSDK", "❌ Room not found for ID: $roomId")
+            result.error("ROOM_NOT_FOUND", "Room not found", null)
+            return
+        }
+
+        room.updateRoom(name, object : IResultCallback {
+            override fun onSuccess() {
+                Log.d("TuyaSDK", "✅ Room $roomId name updated to: $name")
+                result.success(null)
+            }
+
+            override fun onError(code: String?, error: String?) {
+                Log.e("TuyaSDK", "❌ Failed to update room name: $error")
+                result.error(code ?: "UPDATE_ROOM_NAME_FAILED", error ?: "Failed to update room name", null)
+            }
+        })
+    }
+
+    private fun removeRoom(homeId: Long, roomId: Long, result: MethodChannel.Result) {
+        Log.d("TuyaSDK", "🗑️ Removing room $roomId from home $homeId")
+        
+        val home = ThingHomeSdk.newHomeInstance(homeId)
+        if (home == null) {
+            Log.e("TuyaSDK", "❌ Home not found for ID: $homeId")
+            result.error("HOME_NOT_FOUND", "Home not found", null)
+            return
+        }
+
+        home.removeRoom(roomId, object : IResultCallback {
+            override fun onSuccess() {
+                Log.d("TuyaSDK", "✅ Room $roomId removed successfully")
+                result.success(null)
+            }
+
+            override fun onError(code: String?, error: String?) {
+                Log.e("TuyaSDK", "❌ Failed to remove room: $error")
+                result.error(code ?: "REMOVE_ROOM_FAILED", error ?: "Failed to remove room", null)
+            }
+        })
     }
 }

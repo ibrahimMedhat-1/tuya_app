@@ -60,6 +60,30 @@ class TuyaBridge: NSObject {
             NSLog("🎬 [iOS-NSLog] openScenes called")
             openScenes(call, result: result, controller: controller)
             
+        case "getHomeRooms":
+            NSLog("🏠 [iOS-NSLog] getHomeRooms called")
+            getHomeRooms(call, result: result)
+            
+        case "getRoomDevices":
+            NSLog("📱 [iOS-NSLog] getRoomDevices called")
+            getRoomDevices(call, result: result)
+            
+        case "addDeviceToRoom":
+            NSLog("➕ [iOS-NSLog] addDeviceToRoom called")
+            addDeviceToRoom(call, result: result)
+            
+        case "removeDeviceFromRoom":
+            NSLog("➖ [iOS-NSLog] removeDeviceFromRoom called")
+            removeDeviceFromRoom(call, result: result)
+            
+        case "updateRoomName":
+            NSLog("✏️ [iOS-NSLog] updateRoomName called")
+            updateRoomName(call, result: result)
+            
+        case "removeRoom":
+            NSLog("🗑️ [iOS-NSLog] removeRoom called")
+            removeRoom(call, result: result)
+            
         default:
             NSLog("❌ [iOS-NSLog] Method not implemented: \(call.method)")
             result(FlutterMethodNotImplemented)
@@ -545,5 +569,375 @@ class TuyaBridge: NSObject {
             NSLog("❌ [iOS-NSLog] Failed to get homes in ensureCurrentHomeIsSet: \(error?.localizedDescription ?? "Unknown")")
             completion(nil)
         }
+    }
+    
+    // MARK: - Room Management
+    
+    /// Get all rooms for a specific home
+    private func getHomeRooms(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for getHomeRooms")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for getHomeRooms")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        NSLog("🏠 [iOS-NSLog] Getting rooms for home: \(homeId)")
+        
+        guard let home = ThingSmartHome(homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Home not found for ID: \(homeId)")
+            result(FlutterError(code: "HOME_NOT_FOUND", message: "Home not found", details: nil))
+            return
+        }
+        
+        home.getDetailWithSuccess({ (homeModel) in
+            NSLog("✅ [iOS-NSLog] Successfully fetched home details for rooms")
+            
+            guard let roomList = home.roomList, !roomList.isEmpty else {
+                NSLog("ℹ️ [iOS-NSLog] No rooms found for home \(homeId)")
+                result([])
+                return
+            }
+            
+            let roomsData = roomList.map { (room: ThingSmartRoomModel) -> [String: Any] in
+                return [
+                    "roomId": room.roomId,
+                    "name": room.name ?? "Unnamed Room",
+                    "deviceCount": 0, // Device count is calculated from deviceList filter
+                    "icon": room.iconUrl ?? ""
+                ]
+            }
+            
+            NSLog("✅ [iOS-NSLog] Found \(roomsData.count) rooms for home \(homeId)")
+            result(roomsData)
+            
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to get home details for rooms: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "GET_ROOMS_FAILED",
+                message: error?.localizedDescription ?? "Failed to get rooms",
+                details: nil
+            ))
+        })
+    }
+    
+    /// Get devices in a specific room
+    private func getRoomDevices(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for getRoomDevices")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId and roomId are required", details: nil))
+            return
+        }
+        
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for getRoomDevices")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let roomId: Int64
+        if let id = args["roomId"] as? Int {
+            roomId = Int64(id)
+        } else if let id = args["roomId"] as? Int64 {
+            roomId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid roomId type for getRoomDevices")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "roomId is required", details: nil))
+            return
+        }
+        
+        NSLog("📱 [iOS-NSLog] Getting devices for room: \(roomId) in home: \(homeId)")
+        
+        guard let home = ThingSmartHome(homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Home not found for ID: \(homeId)")
+            result(FlutterError(code: "HOME_NOT_FOUND", message: "Home not found", details: nil))
+            return
+        }
+        
+        home.getDetailWithSuccess({ (homeModel) in
+            // Find the room in the home's room list
+            guard let roomList = home.roomList,
+                  let room = roomList.first(where: { $0.roomId == roomId }) else {
+                NSLog("❌ [iOS-NSLog] Room not found for ID: \(roomId)")
+                result(FlutterError(code: "ROOM_NOT_FOUND", message: "Room not found", details: nil))
+                return
+            }
+            
+            // Get devices that belong to this room
+            guard let deviceList = home.deviceList else {
+                NSLog("ℹ️ [iOS-NSLog] No devices found in home")
+                result([])
+                return
+            }
+            
+            let roomDevices = deviceList.filter { device in
+                return device.roomId == roomId
+            }
+            
+            let devicesData = roomDevices.map { (device: ThingSmartDeviceModel) -> [String: Any] in
+                return [
+                    "deviceId": device.devId ?? "",
+                    "name": device.name ?? "no name",
+                    "isOnline": device.isOnline,
+                    "image": device.iconUrl ?? "",
+                    "roomId": device.roomId
+                ]
+            }
+            
+            NSLog("✅ [iOS-NSLog] Found \(devicesData.count) devices in room \(roomId)")
+            result(devicesData)
+            
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to get room devices: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "GET_ROOM_DEVICES_FAILED",
+                message: error?.localizedDescription ?? "Failed to get room devices",
+                details: nil
+            ))
+        })
+    }
+    
+    /// Add a device to a room
+    private func addDeviceToRoom(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for addDeviceToRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId, roomId, and deviceId are required", details: nil))
+            return
+        }
+        
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for addDeviceToRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let roomId: Int64
+        if let id = args["roomId"] as? Int {
+            roomId = Int64(id)
+        } else if let id = args["roomId"] as? Int64 {
+            roomId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid roomId type for addDeviceToRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "roomId is required", details: nil))
+            return
+        }
+        
+        guard let deviceId = args["deviceId"] as? String else {
+            NSLog("❌ [iOS-NSLog] Missing deviceId for addDeviceToRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "deviceId is required", details: nil))
+            return
+        }
+        
+        NSLog("➕ [iOS-NSLog] Adding device \(deviceId) to room \(roomId) in home \(homeId)")
+        
+        guard let room = ThingSmartRoom(roomId: roomId, homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Room not found")
+            result(FlutterError(code: "ROOM_NOT_FOUND", message: "Room not found", details: nil))
+            return
+        }
+        
+        room.addDevice(withDeviceId: deviceId, success: {
+            NSLog("✅ [iOS-NSLog] Device \(deviceId) added to room \(roomId) successfully")
+            result(nil)
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to add device to room: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "ADD_DEVICE_TO_ROOM_FAILED",
+                message: error?.localizedDescription ?? "Failed to add device to room",
+                details: nil
+            ))
+        })
+    }
+    
+    /// Remove a device from a room
+    private func removeDeviceFromRoom(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for removeDeviceFromRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId, roomId, and deviceId are required", details: nil))
+            return
+        }
+        
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for removeDeviceFromRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let roomId: Int64
+        if let id = args["roomId"] as? Int {
+            roomId = Int64(id)
+        } else if let id = args["roomId"] as? Int64 {
+            roomId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid roomId type for removeDeviceFromRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "roomId is required", details: nil))
+            return
+        }
+        
+        guard let deviceId = args["deviceId"] as? String else {
+            NSLog("❌ [iOS-NSLog] Missing deviceId for removeDeviceFromRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "deviceId is required", details: nil))
+            return
+        }
+        
+        NSLog("➖ [iOS-NSLog] Removing device \(deviceId) from room \(roomId) in home \(homeId)")
+        
+        guard let room = ThingSmartRoom(roomId: roomId, homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Room not found")
+            result(FlutterError(code: "ROOM_NOT_FOUND", message: "Room not found", details: nil))
+            return
+        }
+        
+        room.removeDevice(withDeviceId: deviceId, success: {
+            NSLog("✅ [iOS-NSLog] Device \(deviceId) removed from room \(roomId) successfully")
+            result(nil)
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to remove device from room: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "REMOVE_DEVICE_FROM_ROOM_FAILED",
+                message: error?.localizedDescription ?? "Failed to remove device from room",
+                details: nil
+            ))
+        })
+    }
+    
+    /// Update room name
+    private func updateRoomName(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for updateRoomName")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId, roomId, and name are required", details: nil))
+            return
+        }
+        
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for updateRoomName")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let roomId: Int64
+        if let id = args["roomId"] as? Int {
+            roomId = Int64(id)
+        } else if let id = args["roomId"] as? Int64 {
+            roomId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid roomId type for updateRoomName")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "roomId is required", details: nil))
+            return
+        }
+        
+        guard let newName = args["name"] as? String else {
+            NSLog("❌ [iOS-NSLog] Missing name for updateRoomName")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "name is required", details: nil))
+            return
+        }
+        
+        NSLog("✏️ [iOS-NSLog] Updating room \(roomId) name to: \(newName)")
+        
+        guard let room = ThingSmartRoom(roomId: roomId, homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Room not found")
+            result(FlutterError(code: "ROOM_NOT_FOUND", message: "Room not found", details: nil))
+            return
+        }
+        
+        room.updateName(newName, success: {
+            NSLog("✅ [iOS-NSLog] Room \(roomId) name updated to: \(newName)")
+            result(nil)
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to update room name: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "UPDATE_ROOM_NAME_FAILED",
+                message: error?.localizedDescription ?? "Failed to update room name",
+                details: nil
+            ))
+        })
+    }
+    
+    /// Remove a room
+    private func removeRoom(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        guard let args = call.arguments as? [String: Any] else {
+            NSLog("❌ [iOS-NSLog] Missing arguments for removeRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId and roomId are required", details: nil))
+            return
+        }
+        
+        let homeId: Int64
+        if let id = args["homeId"] as? Int {
+            homeId = Int64(id)
+        } else if let id = args["homeId"] as? Int64 {
+            homeId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid homeId type for removeRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "homeId is required", details: nil))
+            return
+        }
+        
+        let roomId: Int64
+        if let id = args["roomId"] as? Int {
+            roomId = Int64(id)
+        } else if let id = args["roomId"] as? Int64 {
+            roomId = id
+        } else {
+            NSLog("❌ [iOS-NSLog] Invalid roomId type for removeRoom")
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "roomId is required", details: nil))
+            return
+        }
+        
+        NSLog("🗑️ [iOS-NSLog] Removing room \(roomId) from home \(homeId)")
+        
+        guard let room = ThingSmartRoom(roomId: roomId, homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Room not found")
+            result(FlutterError(code: "ROOM_NOT_FOUND", message: "Room not found", details: nil))
+            return
+        }
+        
+        // Remove room through home instance
+        guard let home = ThingSmartHome(homeId: homeId) else {
+            NSLog("❌ [iOS-NSLog] Home not found")
+            result(FlutterError(code: "HOME_NOT_FOUND", message: "Home not found", details: nil))
+            return
+        }
+        
+        home.removeRoom(withRoomId: roomId, success: {
+            NSLog("✅ [iOS-NSLog] Room \(roomId) removed successfully")
+            result(nil)
+        }, failure: { (error) in
+            NSLog("❌ [iOS-NSLog] Failed to remove room: \(error?.localizedDescription ?? "Unknown error")")
+            result(FlutterError(
+                code: "REMOVE_ROOM_FAILED",
+                message: error?.localizedDescription ?? "Failed to remove room",
+                details: nil
+            ))
+        })
     }
 }
