@@ -195,8 +195,21 @@ dependencies {
         exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
-    // Map extension
+    // Map extension - base kit
     api("com.thingclips.smart:thingsmart-bizbundle-mapkit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    // CRITICAL: Google Maps implementation for mapkit (prevents AmapService crash)
+    // This provides the actual map service implementation that BizBundle needs
+    implementation("com.thingclips.smart:thingsmart-bizbundle-map_google") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
+    // Google Maps location service for device activation
+    implementation("com.thingclips.smart:thingsmart-bizbundle-location_google") {
         exclude(group = "com.gyf.immersionbar", module = "immersionbar")
         exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
@@ -262,6 +275,14 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("com.google.android.material:material:1.13.0")
+    
+    // Google Play Services Maps (required for map_google BizBundle)
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    
+    // QR Code Scanner for device pairing (official Tuya QR code method)
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.5.2")
 }
 
 // KSP configuration for Hilt 2.50 annotation processing

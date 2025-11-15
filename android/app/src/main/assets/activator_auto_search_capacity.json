@@ -1,0 +1,13 @@
+{
+  "autoSearch": true,
+  "searchTypes": [
+    "WIFI",
+    "BLE",
+    "BLE_MESH",
+    "ZIGBEE",
+    "ZIGBEE_MESH"
+  ],
+  "enableQRCodeScan": true,
+  "enableCameraScan": true
+}
+
