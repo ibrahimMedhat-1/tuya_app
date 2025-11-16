@@ -258,6 +258,14 @@ dependencies {
         exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
     }
     
+    // QR Code BizBundle - REQUIRED for QR code scanning in device pairing UI
+    // Per Tuya documentation: https://developer.tuya.com/en/docs/app-development/activator_mqttdirectly_ios?id=Kcy5fd1gt4htl
+    // This enables QR code scanning functionality in the BizBundle device activator UI
+    implementation("com.thingclips.smart:thingsmart-bizbundle-qrcode_mlkit") {
+        exclude(group = "com.gyf.immersionbar", module = "immersionbar")
+        exclude(group = "com.thingclips.smart", module = "thingplugin-annotation")
+    }
+    
     // BizBundle Initializer - CRITICAL for BizBundle to work (version managed by BOM)
     implementation("com.thingclips.smart:thingsmart-bizbundle-initializer") {
         exclude(group = "com.squareup.okhttp3", module = "okhttp-jvm")
@@ -279,10 +287,6 @@ dependencies {
     // Google Play Services Maps (required for map_google BizBundle)
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
-    
-    // QR Code Scanner for device pairing (official Tuya QR code method)
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.zxing:core:3.5.2")
 }
 
 // KSP configuration for Hilt 2.50 annotation processing

@@ -25,10 +25,8 @@
 
     <!-- Camera permissions for QR scanning -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- IMPORTANT: Camera features must NOT be required for emulators and devices without camera -->
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera" android:required="true"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
-    <uses-feature android:name="android.hardware.camera.any" android:required="false"/>
     
     <!-- CRITICAL: Storage permissions for BizBundle panel extraction -->
     <!-- Required for downloading and extracting panel resources -->
@@ -83,10 +81,9 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode|screenSize|smallestScreenSize"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="unspecified">
+            android:windowSoftInputMode="adjustResize">
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user
                  while the Flutter UI initializes. After that, this theme continues
@@ -106,12 +103,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        
-        <!-- CRITICAL: Camera scanning configuration for Tuya BizBundle Device Activator -->
-        <!-- This enables QR code scanning in the device pairing flow -->
-        <meta-data
-            android:name="TUYA_SMART_ENABLE_QRCODE_SCAN"
-            android:value="true" />
 
     </application>
     <!-- Required to query activities that can process text, see:

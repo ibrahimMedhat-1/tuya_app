@@ -477,3 +477,5 @@ All permissions required for scanning are documented!
 
 🎉 **Device scanning is now fully implemented and working on both platforms!**
 
+
+

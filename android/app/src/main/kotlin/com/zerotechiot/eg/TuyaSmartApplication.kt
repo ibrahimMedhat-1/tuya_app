@@ -46,31 +46,18 @@ class TuyaSmartApplication : Application() {
         com.thingclips.smart.api.start.LauncherApplicationAgent.getInstance().onCreate(this)
         ThingHomeSdk.setDebugMode(true)
         
-        // CRITICAL: Initialize BizBundle BEFORE any service registration
-        // This must be the first BizBundle call after SDK initialization
-        Log.d(TAG, "Initializing BizBundle...")
+        // Initialize BizBundle with proper service event listener
         BizBundleInitializer.init(
             this,
-            object : RouteEventListener {
-                override fun onFaild(errorCode: Int, error: UrlBuilder?) {
-                    Log.e(TAG, "BizBundle route failed: $errorCode - ${error?.target}")
-                }
-            },
-            object : ServiceEventListener {
-                override fun onFaild(serviceName: String?) {
-                    Log.e(TAG, "BizBundle service failed: $serviceName")
-                }
-            }
+            null,  // RouteEventListener
+            null   // ServiceEventListener
         )
-        Log.d(TAG, "✅ BizBundle initialized")
-        
-        // Register Family Service for home/room management
-        Log.d(TAG, "Registering Family Service...")
         BizBundleInitializer.registerService<AbsBizBundleFamilyService?, AbsBizBundleFamilyService?>(
             AbsBizBundleFamilyService::class.java,
             BizBundleFamilyServiceImpl()
         )
-        Log.d(TAG, "✅ All BizBundle services registered")
+
+
     }
     private fun initializeDatabase() {
         try {

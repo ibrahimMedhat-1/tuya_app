@@ -12,9 +12,9 @@ import com.thingclips.smart.activator.core.kit.bean.ThingActivatorScanDeviceBean
 import com.thingclips.smart.activator.core.kit.bean.ThingActivatorScanFailureBean
 import com.thingclips.smart.activator.core.kit.builder.ThingActivatorScanBuilder
 import com.thingclips.smart.activator.core.kit.callback.ThingActivatorScanCallback
+import com.thingclips.smart.sdk.api.IThingDataCallback
+import com.thingclips.smart.sdk.bean.QrScanBean
 import com.thingclips.smart.activator.plug.mesosphere.ThingDeviceActivatorManager
-// QR Code scanning imports - using ZXing for scanning
-// Note: Using reflection to access ZXing classes to avoid import issues
 import com.thingclips.smart.android.user.api.ILoginCallback
 import com.thingclips.smart.android.user.api.ILogoutCallback
 import com.thingclips.smart.android.user.api.IRegisterCallback
@@ -47,12 +47,6 @@ class MainActivity : FlutterActivity() {
     companion object {
         private var isScenePipelineInitialized = false
     }
-    
-    // QR Code scan request code
-    private val QR_CODE_SCAN_REQUEST = 2001
-    
-    // QR Code Activator instance for device pairing (stored as Any to avoid import issues)
-    private var qrCodeActivator: Any? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -136,13 +130,13 @@ class MainActivity : FlutterActivity() {
                     }
                 }
 
-                "scanQRCodeForPairing" -> {
-                    try {
-                        Log.d("TuyaSDK", "Starting QR code scan for device pairing")
-                        scanQRCodeForPairing(result)
-                    } catch (e: Exception) {
-                        Log.e("TuyaSDK", "Failed to scan QR code: ${e.message}", e)
-                        result.error("QR_SCAN_FAILED", "Failed to scan QR code: ${e.message}", null)
+                "pairDeviceWithQRCode" -> {
+                    val qrCodeUrl = call.argument<String>("qrCodeUrl")
+                    val homeId = call.argument<Int>("homeId")
+                    if (qrCodeUrl != null && homeId != null) {
+                        pairDeviceWithQRCode(qrCodeUrl, homeId.toLong(), result)
+                    } else {
+                        result.error("INVALID_ARGUMENTS", "qrCodeUrl and homeId are required", null)
                     }
                 }
 
@@ -744,400 +738,6 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * Scan QR Code for Device Pairing
-     * Official Tuya Documentation: https://developer.tuya.com/en/docs/app-development/Scan-the-QR-code-of-the-device-configuration?id=Kaixkxky0f221
-     * 
-     * This method:
-     * 1. Opens QR code scanner
-     * 2. Parses the QR code URL to get device UUID
-     * 3. Starts QR code device pairing
-     */
-    private fun scanQRCodeForPairing(result: MethodChannel.Result) {
-        try {
-            Log.d("TuyaSDK", "════════════════════════════════════════")
-            Log.d("TuyaSDK", "📷 Starting QR code scan for device pairing")
-            Log.d("TuyaSDK", "════════════════════════════════════════")
-            
-            // Check camera permission first
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
-                != PackageManager.PERMISSION_GRANTED) {
-                Log.w("TuyaSDK", "⚠️ Camera permission not granted, requesting...")
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.CAMERA),
-                    1002
-                )
-                result.error("CAMERA_PERMISSION_REQUIRED", "Camera permission is required for QR code scanning", null)
-                return
-            }
-            
-            // Check if user is logged in
-            val user = ThingHomeSdk.getUserInstance().user
-            if (user == null) {
-                Log.e("TuyaSDK", "❌ User not logged in")
-                result.error("USER_NOT_LOGGED_IN", "User must be logged in to pair devices", null)
-                return
-            }
-            
-            // Get current home ID
-            val serviceManager = MicroServiceManager.getInstance()
-            val familyService = serviceManager?.findServiceByInterface(
-                AbsBizBundleFamilyService::class.java.name
-            ) as? AbsBizBundleFamilyService
-            
-            var homeId: Long = 0
-            if (familyService != null) {
-                homeId = familyService.currentHomeId
-                if (homeId <= 0) {
-                    // Try to get first home
-                    ThingHomeSdk.getHomeManagerInstance().queryHomeList(object : IThingGetHomeListCallback {
-                        override fun onSuccess(homeBeans: MutableList<HomeBean>?) {
-                            if (!homeBeans.isNullOrEmpty()) {
-                                val firstHome = homeBeans[0]
-                                familyService.shiftCurrentFamily(firstHome.homeId, firstHome.name)
-                                homeId = firstHome.homeId
-                                Log.d("TuyaSDK", "✅ Set current home: ${firstHome.name} (ID: $homeId)")
-                                // Now start QR scanner
-                                startQRCodeScanner(homeId, result)
-                            } else {
-                                Log.e("TuyaSDK", "❌ No homes found")
-                                result.error("NO_HOME", "Please create a home before pairing devices", null)
-                            }
-                        }
-                        
-                        override fun onError(code: String?, error: String?) {
-                            Log.e("TuyaSDK", "❌ Failed to get home list: $code - $error")
-                            result.error("HOME_ERROR", "Failed to get home: $error", null)
-                        }
-                    })
-                    return
-                }
-            } else {
-                Log.e("TuyaSDK", "❌ Family service not available")
-                result.error("FAMILY_SERVICE_NULL", "Family service not initialized", null)
-                return
-            }
-            
-            // Start QR scanner
-            startQRCodeScanner(homeId, result)
-            
-        } catch (e: Exception) {
-            Log.e("TuyaSDK", "❌ Exception in scanQRCodeForPairing: ${e.message}", e)
-            result.error("QR_SCAN_ERROR", "Exception: ${e.message}", null)
-        }
-    }
-    
-    /**
-     * Start QR Code Scanner using ZXing (via reflection)
-     */
-    private fun startQRCodeScanner(homeId: Long, result: MethodChannel.Result) {
-        try {
-            Log.d("TuyaSDK", "📷 Opening QR code scanner...")
-            
-            // Use reflection to access ZXing ScanIntentIntegrator
-            val integratorClass = Class.forName("com.journeyapps.barcodescanner.ScanIntentIntegrator")
-            val integrator = integratorClass.getConstructor(android.app.Activity::class.java).newInstance(this)
-            
-            // Configure QR code scanner
-            val setDesiredBarcodeFormatsMethod = integratorClass.getMethod("setDesiredBarcodeFormats", Array<String>::class.java)
-            val qrCodeFormat = integratorClass.getField("QR_CODE").get(null) as String
-            setDesiredBarcodeFormatsMethod.invoke(integrator, arrayOf(qrCodeFormat))
-            
-            val setPromptMethod = integratorClass.getMethod("setPrompt", String::class.java)
-            setPromptMethod.invoke(integrator, "Scan device QR code")
-            
-            val setCameraIdMethod = integratorClass.getMethod("setCameraId", Int::class.javaPrimitiveType)
-            setCameraIdMethod.invoke(integrator, 0) // Use back camera
-            
-            val setBeepEnabledMethod = integratorClass.getMethod("setBeepEnabled", Boolean::class.javaPrimitiveType)
-            setBeepEnabledMethod.invoke(integrator, true)
-            
-            val setBarcodeImageEnabledMethod = integratorClass.getMethod("setBarcodeImageEnabled", Boolean::class.javaPrimitiveType)
-            setBarcodeImageEnabledMethod.invoke(integrator, false)
-            
-            val setOrientationLockedMethod = integratorClass.getMethod("setOrientationLocked", Boolean::class.javaPrimitiveType)
-            setOrientationLockedMethod.invoke(integrator, false)
-            
-            // Start scan activity
-            val initiateScanMethod = integratorClass.getMethod("initiateScan")
-            initiateScanMethod.invoke(integrator)
-            
-            // Store result callback for onActivityResult
-            pendingQRScanResult = result
-            pendingQRScanHomeId = homeId
-            
-            Log.d("TuyaSDK", "✅ QR code scanner started")
-            
-        } catch (e: Exception) {
-            Log.e("TuyaSDK", "❌ Failed to start QR scanner: ${e.message}", e)
-            Log.e("TuyaSDK", "   Stack trace: ${e.stackTrace.joinToString("\n")}")
-            result.error("SCANNER_START_FAILED", "Failed to start QR scanner: ${e.message}", null)
-        }
-    }
-    
-    // Store pending QR scan result
-    private var pendingQRScanResult: MethodChannel.Result? = null
-    private var pendingQRScanHomeId: Long = 0
-    
-    /**
-     * Handle QR code scan result
-     * Per official Tuya documentation: https://developer.tuya.com/en/docs/app-development/Scan-the-QR-code-of-the-device-configuration?id=Kaixkxky0f221
-     */
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        
-        // Parse QR code scan result using reflection
-        try {
-            val integratorClass = Class.forName("com.journeyapps.barcodescanner.ScanIntentIntegrator")
-            val parseActivityResultMethod = integratorClass.getMethod(
-                "parseActivityResult",
-                Int::class.javaPrimitiveType,
-                Int::class.javaPrimitiveType,
-                Intent::class.java
-            )
-            val scanResult = parseActivityResultMethod.invoke(null, requestCode, resultCode, data)
-            
-            if (scanResult != null) {
-                val contentsField = scanResult.javaClass.getDeclaredField("contents")
-                contentsField.isAccessible = true
-                val qrCodeUrl = contentsField.get(scanResult) as? String
-                
-                if (qrCodeUrl != null && qrCodeUrl.isNotEmpty()) {
-                    Log.d("TuyaSDK", "✅ QR code scanned: $qrCodeUrl")
-                    
-                    // Parse QR code to get UUID (Step 1 from official docs)
-                    parseQRCodeAndPair(qrCodeUrl, pendingQRScanHomeId, pendingQRScanResult)
-                    
-                    // Clear pending
-                    pendingQRScanResult = null
-                    pendingQRScanHomeId = 0
-                } else {
-                    Log.d("TuyaSDK", "❌ QR code scan cancelled or failed")
-                    pendingQRScanResult?.error("QR_SCAN_CANCELLED", "QR code scan was cancelled", null)
-                    pendingQRScanResult = null
-                    pendingQRScanHomeId = 0
-                }
-            } else {
-                Log.d("TuyaSDK", "❌ QR code scan cancelled or failed")
-                pendingQRScanResult?.error("QR_SCAN_CANCELLED", "QR code scan was cancelled", null)
-                pendingQRScanResult = null
-                pendingQRScanHomeId = 0
-            }
-        } catch (e: Exception) {
-            Log.e("TuyaSDK", "❌ Error parsing QR scan result: ${e.message}", e)
-            pendingQRScanResult?.error("QR_SCAN_PARSE_ERROR", "Failed to parse QR scan result: ${e.message}", null)
-            pendingQRScanResult = null
-            pendingQRScanHomeId = 0
-        }
-    }
-    
-    /**
-     * Parse QR Code and Start Pairing
-     * Official Tuya Documentation: https://developer.tuya.com/en/docs/app-development/Scan-the-QR-code-of-the-device-configuration?id=Kaixkxky0f221
-     * Using reflection to access Tuya SDK classes that may not be directly importable
-     */
-    private fun parseQRCodeAndPair(qrCodeUrl: String, homeId: Long, result: MethodChannel.Result?) {
-        try {
-            Log.d("TuyaSDK", "════════════════════════════════════════")
-            Log.d("TuyaSDK", "🔍 Parsing QR code: $qrCodeUrl")
-            Log.d("TuyaSDK", "   Home ID: $homeId")
-            Log.d("TuyaSDK", "════════════════════════════════════════")
-            
-            // Step 1: Parse QR code to get UUID using reflection
-            // Per official docs: ThingHomeSdk.getActivatorInstance().deviceQrCodeParse()
-            try {
-                val activatorInstance = ThingHomeSdk.getActivatorInstance()
-                val parseMethod = activatorInstance.javaClass.getMethod(
-                    "deviceQrCodeParse",
-                    String::class.java,
-                    Class.forName("com.thingclips.smart.sdk.api.IThingDataCallback")
-                )
-                
-                // Create callback using reflection
-                val callbackClass = Class.forName("com.thingclips.smart.sdk.api.IThingDataCallback")
-                val callback = java.lang.reflect.Proxy.newProxyInstance(
-                    callbackClass.classLoader,
-                    arrayOf(callbackClass)
-                ) { _, method, args ->
-                    when (method.name) {
-                        "onSuccess" -> {
-                            val qrScanBean = args?.get(0)
-                            if (qrScanBean != null) {
-                                try {
-                                    // Get actionData field using reflection
-                                    val actionDataField = qrScanBean.javaClass.getDeclaredField("actionData")
-                                    actionDataField.isAccessible = true
-                                    val uuid = actionDataField.get(qrScanBean) as? String
-                                    
-                                    if (uuid != null && uuid.isNotEmpty()) {
-                                        Log.d("TuyaSDK", "✅ QR code parsed successfully")
-                                        Log.d("TuyaSDK", "   Device UUID: $uuid")
-                                        
-                                        // Start pairing with UUID
-                                        startQRCodePairing(uuid, homeId, result)
-                                    } else {
-                                        Log.e("TuyaSDK", "❌ Invalid UUID from QR code")
-                                        result?.error("INVALID_QR_CODE", "QR code does not contain valid device UUID", null)
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("TuyaSDK", "❌ Error extracting UUID: ${e.message}", e)
-                                    result?.error("UUID_EXTRACTION_ERROR", "Failed to extract UUID: ${e.message}", null)
-                                }
-                            } else {
-                                Log.e("TuyaSDK", "❌ Invalid QR code result")
-                                result?.error("INVALID_QR_CODE", "QR code does not contain valid device information", null)
-                            }
-                            null
-                        }
-                        "onError" -> {
-                            val errorCode = args?.get(0) as? String
-                            val errorMessage = args?.get(1) as? String
-                            Log.e("TuyaSDK", "❌ QR code parse error: $errorCode - $errorMessage")
-                            result?.error(
-                                errorCode ?: "QR_PARSE_ERROR",
-                                errorMessage ?: "Failed to parse QR code",
-                                null
-                            )
-                            null
-                        }
-                        else -> null
-                    }
-                }
-                
-                parseMethod.invoke(activatorInstance, qrCodeUrl, callback)
-                Log.d("TuyaSDK", "✅ QR code parse method called")
-                
-            } catch (e: Exception) {
-                Log.e("TuyaSDK", "❌ Exception parsing QR code with reflection: ${e.message}", e)
-                Log.e("TuyaSDK", "   Stack trace: ${e.stackTrace.joinToString("\n")}")
-                result?.error("QR_PARSE_EXCEPTION", "Exception: ${e.message}", null)
-            }
-            
-        } catch (e: Exception) {
-            Log.e("TuyaSDK", "❌ Exception in parseQRCodeAndPair: ${e.message}", e)
-            result?.error("QR_PARSE_EXCEPTION", "Exception: ${e.message}", null)
-        }
-    }
-    
-    /**
-     * Start QR Code Pairing with UUID
-     * Uses reflection to access Tuya SDK QR code activator classes
-     */
-    private fun startQRCodePairing(uuid: String, homeId: Long, result: MethodChannel.Result?) {
-        try {
-            Log.d("TuyaSDK", "🚀 Starting QR code device pairing with UUID: $uuid")
-            
-            // Use reflection to create QR code activator
-            val activatorInstance = ThingHomeSdk.getActivatorInstance()
-            
-            // Try to create QR code activator builder using reflection
-            try {
-                val builderClass = Class.forName("com.thingclips.smart.home.sdk.activator.ThingQRCodeActivatorBuilder")
-                val builder = builderClass.getDeclaredConstructor().newInstance()
-                
-                // Set UUID
-                val setUuidMethod = builderClass.getMethod("setUuid", String::class.java)
-                setUuidMethod.invoke(builder, uuid)
-                
-                // Set Home ID
-                val setHomeIdMethod = builderClass.getMethod("setHomeId", Long::class.javaPrimitiveType)
-                setHomeIdMethod.invoke(builder, homeId)
-                
-                // Set Context
-                val setContextMethod = builderClass.getMethod("setContext", android.content.Context::class.java)
-                setContextMethod.invoke(builder, this)
-                
-                // Set Timeout
-                val setTimeoutMethod = builderClass.getMethod("setTimeOut", Int::class.javaPrimitiveType)
-                setTimeoutMethod.invoke(builder, 100)
-                
-                // Create listener using reflection
-                val listenerClass = Class.forName("com.thingclips.smart.home.sdk.activator.IThingSmartActivatorListener")
-                val listener = java.lang.reflect.Proxy.newProxyInstance(
-                    listenerClass.classLoader,
-                    arrayOf(listenerClass)
-                ) { _, method, args ->
-                    when (method.name) {
-                        "onError" -> {
-                            val errorCode = args?.get(0) as? String
-                            val errorMsg = args?.get(1) as? String
-                            Log.e("TuyaSDK", "❌ Device pairing error: $errorCode - $errorMsg")
-                            result?.error(
-                                errorCode ?: "PAIRING_ERROR",
-                                errorMsg ?: "Device pairing failed",
-                                null
-                            )
-                            null
-                        }
-                        "onActiveSuccess" -> {
-                            val devResp = args?.get(0)
-                            if (devResp != null) {
-                                try {
-                                    val devIdField = devResp.javaClass.getDeclaredField("devId")
-                                    devIdField.isAccessible = true
-                                    val devId = devIdField.get(devResp) as? String
-                                    
-                                    val nameField = devResp.javaClass.getDeclaredField("name")
-                                    nameField.isAccessible = true
-                                    val name = nameField.get(devResp) as? String
-                                    
-                                    Log.d("TuyaSDK", "✅ Device paired successfully!")
-                                    Log.d("TuyaSDK", "   Device ID: $devId")
-                                    Log.d("TuyaSDK", "   Device Name: $name")
-                                    result?.success(mapOf(
-                                        "deviceId" to (devId ?: ""),
-                                        "deviceName" to (name ?: ""),
-                                        "success" to true
-                                    ))
-                                } catch (e: Exception) {
-                                    Log.e("TuyaSDK", "❌ Error extracting device info: ${e.message}", e)
-                                    result?.success(mapOf("success" to true))
-                                }
-                            }
-                            null
-                        }
-                        "onStep" -> {
-                            val step = args?.get(0) as? String
-                            Log.d("TuyaSDK", "📋 Pairing step: $step")
-                            null
-                        }
-                        else -> null
-                    }
-                }
-                
-                // Set listener
-                val setListenerMethod = builderClass.getMethod("setListener", listenerClass)
-                setListenerMethod.invoke(builder, listener)
-                
-                // Create activator
-                val newQRCodeDevActivatorMethod = activatorInstance.javaClass.getMethod(
-                    "newQRCodeDevActivator",
-                    builderClass
-                )
-                val activator = newQRCodeDevActivatorMethod.invoke(activatorInstance, builder)
-                
-                // Start pairing
-                val startMethod = activator?.javaClass?.getMethod("start")
-                startMethod?.invoke(activator)
-                
-                // Store activator for cleanup
-                qrCodeActivator = activator
-                
-                Log.d("TuyaSDK", "🚀 QR code device pairing started")
-                
-            } catch (e: Exception) {
-                Log.e("TuyaSDK", "❌ Exception creating QR code activator: ${e.message}", e)
-                Log.e("TuyaSDK", "   Stack trace: ${e.stackTrace.joinToString("\n")}")
-                result?.error("ACTIVATOR_CREATION_ERROR", "Failed to create QR code activator: ${e.message}", null)
-            }
-            
-        } catch (e: Exception) {
-            Log.e("TuyaSDK", "❌ Exception in startQRCodePairing: ${e.message}", e)
-            result?.error("PAIRING_START_ERROR", "Exception: ${e.message}", null)
-        }
-    }
-
-    /**
      * Execute a manual scene (Tap to Run)
      * Per Tuya SDK documentation for Scene BizBundle
      * https://developer.tuya.com/en/docs/app-development/scene?id=Ka8qf8lmlptsr
@@ -1214,31 +814,6 @@ class MainActivity : FlutterActivity() {
                     pendingPairingRequest = null
                 }
             }
-            1002 -> {
-                // QR Code scanner camera permission
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("TuyaSDK", "✅ Camera permission granted for QR code scanning")
-                    // Retry QR code scanning
-                    if (pendingQRScanHomeId > 0 && pendingQRScanResult != null) {
-                        val homeId = pendingQRScanHomeId
-                        val result = pendingQRScanResult
-                        pendingQRScanHomeId = 0
-                        pendingQRScanResult = null
-                        handler.postDelayed({
-                            startQRCodeScanner(homeId, result!!)
-                        }, 300)
-                    }
-                } else {
-                    Log.e("TuyaSDK", "❌ Camera permission denied for QR code scanning")
-                    pendingQRScanResult?.error(
-                        "CAMERA_PERMISSION_DENIED",
-                        "Camera permission is required for QR code scanning. Please grant permission in app settings.",
-                        null
-                    )
-                    pendingQRScanResult = null
-                    pendingQRScanHomeId = 0
-                }
-            }
         }
     }
     
@@ -1285,169 +860,118 @@ class MainActivity : FlutterActivity() {
             Log.d("TuyaSDK", "🔧 Starting device activator")
             Log.d("TuyaSDK", "════════════════════════════════════════")
 
-            try {
-                // Double-check permissions are still granted (safety check)
-                if (!checkPermissions()) {
-                    Log.e("TuyaSDK", "❌ Permissions were revoked, cannot start pairing")
-                    result.error("PERMISSIONS_REVOKED", "Required permissions are not granted", null)
-                    return
-                }
-                
-                // Check if we have a valid context
-                Log.d("TuyaSDK", "✅ Context valid: ${this.javaClass.name}")
-                
-                // Try the BizBundle UI approach now that theme is properly configured
-                Log.d("TuyaSDK", "🎯 Attempting to start BizBundle device pairing UI")
-                Log.d("TuyaSDK", "   All permissions verified before opening UI")
+            // Double-check permissions are still granted (safety check)
+            if (!checkPermissions()) {
+                Log.e("TuyaSDK", "❌ Permissions were revoked, cannot start pairing")
+                result.error("PERMISSIONS_REVOKED", "Required permissions are not granted", null)
+                return
+            }
+            
+            // Check if we have a valid context
+            Log.d("TuyaSDK", "✅ Context valid: ${this.javaClass.name}")
+            
+            // Try the BizBundle UI approach now that theme is properly configured
+            Log.d("TuyaSDK", "🎯 Attempting to start BizBundle device pairing UI")
+            Log.d("TuyaSDK", "   All permissions verified before opening UI")
 
-                try {
-                    // OFFICIAL TUYA DOCUMENTATION METHOD:
-                    // Per official docs: https://developer.tuya.com/en/docs/app-development/activator
-                    // CRITICAL: Ensure home context is set before opening device activator UI
+            try {
+                    // Per official Tuya documentation: Ensure current home is set BEFORE opening pairing UI
+                    // This is REQUIRED for the BizBundle UI to properly handle device activation
                     val serviceManager = MicroServiceManager.getInstance()
                     val familyService = serviceManager?.findServiceByInterface(
                         AbsBizBundleFamilyService::class.java.name
                     ) as? AbsBizBundleFamilyService
                     
-                    if (familyService != null) {
-                        var currentHomeId = familyService.currentHomeId
-                        if (currentHomeId <= 0) {
-                            // No home set, try to get the first home from user's home list
-                            Log.w("TuyaSDK", "⚠️ No current home set, attempting to get first home...")
-                            ThingHomeSdk.getHomeManagerInstance().queryHomeList(object : IThingGetHomeListCallback {
-                                override fun onSuccess(homeBeans: MutableList<HomeBean>?) {
-                                    if (!homeBeans.isNullOrEmpty()) {
-                                        val firstHome = homeBeans[0]
-                                        familyService.shiftCurrentFamily(firstHome.homeId, firstHome.name)
-                                        Log.d("TuyaSDK", "✅ Set current home: ${firstHome.name} (ID: ${firstHome.homeId})")
-                                    } else {
-                                        Log.e("TuyaSDK", "❌ No homes found, user must create a home first")
-                                    }
-                                }
-                                
-                                override fun onError(code: String?, error: String?) {
-                                    Log.e("TuyaSDK", "❌ Failed to get home list: $code - $error")
-                                }
-                            })
-                            // Wait a moment for home to be set
-                            Thread.sleep(500)
-                            currentHomeId = familyService.currentHomeId
-                        }
-                        
-                        if (currentHomeId > 0) {
-                            Log.d("TuyaSDK", "✅ Current home ID: $currentHomeId")
-                        } else {
-                            Log.e("TuyaSDK", "❌ No home available, device pairing requires a home")
-                            result.error("NO_HOME", "Please create a home before pairing devices", null)
-                            return
-                        }
-                    } else {
-                        Log.e("TuyaSDK", "❌ Family service not available")
-                        result.error("FAMILY_SERVICE_NULL", "Family service not initialized", null)
+                    if (familyService == null) {
+                        Log.e("TuyaSDK", "❌ AbsBizBundleFamilyService not found")
+                        result.error("SERVICE_NOT_FOUND", "Family service not initialized", null)
                         return
                     }
                     
-                    // Start device activator UI - this includes QR code scanning
-                    // Per official Tuya documentation, this method opens the full pairing UI
-                    ThingDeviceActivatorManager.startDeviceActiveAction(this)
-                    Log.d("TuyaSDK", "✅ BizBundle device pairing UI started successfully")
-                    Log.d("TuyaSDK", "   Camera scanning is now available in the UI")
-                    result.success("Device pairing UI started successfully")
-                } catch (uiException: Exception) {
-                    Log.e(
-                        "TuyaSDK",
-                        "BizBundle UI failed, falling back to core scanning: ${uiException.message}"
-                    )
-
-                    // Fallback to core activator scanning if UI fails
-                    Log.d("TuyaSDK", "Using core activator approach as fallback")
+                    // Get current home ID - MUST be set before opening BizBundle UI
+                    var currentHomeId = familyService.currentHomeId
                     
-                    // Configure scan builder (timeout is handled by SDK default or can be set if method exists)
-                    val scanBuilder = ThingActivatorScanBuilder()
-                    
-                    // Try to set timeout if method exists (120 seconds recommended by Tuya)
-                    try {
-                        val timeoutMethod = scanBuilder.javaClass.getMethod("setTimeout", Int::class.javaPrimitiveType)
-                        timeoutMethod.invoke(scanBuilder, 120)
-                        Log.d("TuyaSDK", "Scan timeout set to 120 seconds")
-                    } catch (e: Exception) {
-                        Log.d("TuyaSDK", "Timeout method not available, using default")
-                    }
-                    
-                    Log.d("TuyaSDK", "Starting device scan")
-                    Log.d("TuyaSDK", "Scanning for Wi-Fi and Bluetooth devices...")
-
-                    ThingActivatorCoreKit.getScanDeviceManager()
-                        .startScan(scanBuilder, object : ThingActivatorScanCallback {
-                            override fun deviceFound(deviceBean: ThingActivatorScanDeviceBean) {
-                                Log.d("TuyaSDK", "═══════════════════════════════════════")
-                                Log.d("TuyaSDK", "✅ Device FOUND!")
-                                Log.d("TuyaSDK", "   Name: ${deviceBean.name}")
-                                
-                                // Safely access properties that may exist
-                                try {
-                                    val uuidField = deviceBean.javaClass.getDeclaredField("uuid")
-                                    uuidField.isAccessible = true
-                                    val uuid = uuidField.get(deviceBean) as? String
-                                    if (uuid != null) {
-                                        Log.d("TuyaSDK", "   UUID: $uuid")
-                                    }
-                                } catch (e: Exception) {
-                                    // UUID field not available
+                    if (currentHomeId <= 0) {
+                        // No home set - MUST get and set home synchronously before opening UI
+                        Log.w("TuyaSDK", "⚠️ No current home set, getting first home...")
+                        
+                        // Use semaphore to wait synchronously for home list
+                        val semaphore = java.util.concurrent.Semaphore(0)
+                        var firstHome: HomeBean? = null
+                        var homeError: String? = null
+                        
+                        ThingHomeSdk.getHomeManagerInstance().queryHomeList(object : IThingGetHomeListCallback {
+                            override fun onSuccess(homeBeans: MutableList<HomeBean>?) {
+                                if (!homeBeans.isNullOrEmpty()) {
+                                    firstHome = homeBeans[0]
+                                    Log.d("TuyaSDK", "✅ Found home: ${firstHome!!.name} (ID: ${firstHome!!.homeId})")
+                                } else {
+                                    homeError = "No homes found"
+                                    Log.e("TuyaSDK", "❌ No homes found, user must create a home first")
                                 }
-                                
-                                try {
-                                    val productIdField = deviceBean.javaClass.getDeclaredField("productId")
-                                    productIdField.isAccessible = true
-                                    val productId = productIdField.get(deviceBean) as? String
-                                    if (productId != null) {
-                                        Log.d("TuyaSDK", "   Product ID: $productId")
-                                    }
-                                } catch (e: Exception) {
-                                    // ProductId field not available
-                                }
-                                
-                                Log.d("TuyaSDK", "   Device: ${deviceBean.toString()}")
-                                Log.d("TuyaSDK", "═══════════════════════════════════════")
-                                
-                                // You can implement UI to show discovered devices here
-                                // For now, logging the device information
+                                semaphore.release()
                             }
-
-                            override fun deviceRepeat(deviceBean: ThingActivatorScanDeviceBean) {
-                                Log.d("TuyaSDK", "⚡ Device repeat: ${deviceBean.name}")
-                            }
-
-                            override fun deviceUpdate(deviceBean: ThingActivatorScanDeviceBean) {
-                                Log.d("TuyaSDK", "🔄 Device update: ${deviceBean.name}")
-                            }
-
-                            override fun scanFailure(failureBean: ThingActivatorScanFailureBean) {
-                                Log.e("TuyaSDK", "❌ Scan failed!")
-                                Log.e("TuyaSDK", "   Error Code: ${failureBean.errorCode}")
-                                Log.e("TuyaSDK", "   Error Message: ${failureBean.errorMsg}")
-                            }
-
-                            override fun scanFinish() {
-                                Log.d("TuyaSDK", "✅ Device scan finished (after timeout or manual stop)")
+                            
+                            override fun onError(code: String?, error: String?) {
+                                homeError = error ?: code ?: "Unknown error"
+                                Log.e("TuyaSDK", "❌ Failed to get home list: $code - $error")
+                                semaphore.release()
                             }
                         })
-
-                    Log.d("TuyaSDK", "✅ Device scanning started successfully")
-                    Log.d("TuyaSDK", "   Make sure devices are in pairing mode!")
-                    result.success("Device scanning started - Check logs for discovered devices")
-                }
-
+                        
+                        // Wait for home list (max 5 seconds)
+                        if (semaphore.tryAcquire(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                            if (firstHome != null) {
+                                // Set current home - REQUIRED before opening BizBundle UI
+                                familyService.shiftCurrentFamily(firstHome!!.homeId, firstHome!!.name)
+                                currentHomeId = firstHome!!.homeId
+                                Log.d("TuyaSDK", "✅ Current home set: ${firstHome!!.name} (ID: $currentHomeId)")
+                            } else {
+                                Log.e("TuyaSDK", "❌ Cannot proceed without a home: $homeError")
+                                result.error("NO_HOME", "No home available. Please create a home first.", null)
+                                return
+                            }
+                        } else {
+                            Log.e("TuyaSDK", "❌ Timeout waiting for home list")
+                            result.error("TIMEOUT", "Timeout getting home list", null)
+                            return
+                        }
+                    } else {
+                        Log.d("TuyaSDK", "✅ Current home ID already set: $currentHomeId")
+                    }
+                    
+                    // Verify home is set before proceeding
+                    if (currentHomeId <= 0) {
+                        Log.e("TuyaSDK", "❌ Invalid home ID: $currentHomeId")
+                        result.error("INVALID_HOME", "Invalid home ID", null)
+                        return
+                    }
+                    
+                    // Per official Tuya documentation: ThingDeviceActivatorManager.startDeviceActiveAction()
+                    // This opens the BizBundle UI which handles:
+                    // - QR code scanning (via thingsmart-bizbundle-qrcode_mlkit)
+                    // - Device activation and binding
+                    // - Gateway device pairing (including Zigbee gateways)
+                    // The BizBundle UI will automatically complete pairing after QR code scan
+                    Log.d("TuyaSDK", "🚀 Starting BizBundle device pairing UI...")
+                    Log.d("TuyaSDK", "   Current Home ID: $currentHomeId")
+                    Log.d("TuyaSDK", "   QR code scanning: Enabled")
+                    Log.d("TuyaSDK", "   Device scanning: Enabled")
+                    
+                    // Start BizBundle UI - this will handle QR code scanning and activation automatically
+                    ThingDeviceActivatorManager.startDeviceActiveAction(this)
+                    
+                    Log.d("TuyaSDK", "✅ BizBundle device pairing UI started successfully")
+                    Log.d("TuyaSDK", "   The UI will handle QR code scanning and device activation automatically")
+                    result.success("Device pairing UI started successfully")
+                    
             } catch (e: Exception) {
-                Log.e("TuyaSDK", "Failed to start device scanning: ${e.message}", e)
-                Log.e("TuyaSDK", "Exception type: ${e.javaClass.simpleName}")
-                Log.e("TuyaSDK", "Stack trace: ${e.stackTrace.joinToString("\n")}")
-
-                result.error("SCAN_FAILED", "Failed to start device scanning: ${e.message}", null)
+                Log.e("TuyaSDK", "❌ Failed to start BizBundle UI: ${e.message}", e)
+                result.error("UI_START_ERROR", "Failed to start pairing UI: ${e.message}", null)
             }
 
         } catch (e: Exception) {
-            Log.e("TuyaSDK", "Failed to start device pairing: ${e.message}", e)
+            Log.e("TuyaSDK", "❌ Exception in device pairing: ${e.message}", e)
             result.error("PAIR_FAILED", "Failed to start device pairing: ${e.message}", null)
         }
     }
@@ -1455,7 +979,8 @@ class MainActivity : FlutterActivity() {
     private fun checkPermissions(): Boolean {
         val permissions = mutableListOf<String>()
 
-        // CRITICAL: Check camera permission (required for QR code scanning in device pairing)
+        // CRITICAL: Check camera permission (required for QR code scanning in device pairing UI)
+        // Per Tuya documentation: QR code scanning requires camera access
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
@@ -1546,7 +1071,8 @@ class MainActivity : FlutterActivity() {
     private fun requestPermissions() {
         val permissions = mutableListOf<String>()
 
-        // CRITICAL: Request camera permission (required for QR code scanning in device pairing)
+        // CRITICAL: Request camera permission (required for QR code scanning in device pairing UI)
+        // Per Tuya documentation: QR code scanning requires camera access
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
@@ -1698,6 +1224,8 @@ class MainActivity : FlutterActivity() {
         super.onDestroy()
         // Clean up SDK resources when app is destroyed
         ThingHomeSdk.onDestroy()
+        // Clean up QR code activator when activity is destroyed
+        cleanupQRCodeActivator()
     }
 
     // Room Management Methods
@@ -1955,6 +1483,276 @@ class MainActivity : FlutterActivity() {
                     null
                 )
             }
+        }
+    }
+
+    // Store QR code activator for cleanup (using Any to avoid import issues)
+    private var currentQRCodeActivator: Any? = null
+
+    /**
+     * Pair Device with QR Code using Official Tuya Core SDK API
+     * Official Documentation: https://developer.tuya.com/en/docs/app-development/Scan-the-QR-code-of-the-device-configuration?id=Kaixkxky0f221
+     * 
+     * This method implements the complete QR code pairing flow:
+     * 1. Parse QR code URL to get device UUID using deviceQrCodeParse()
+     * 2. Initialize pairing parameters with ThingQRCodeActivatorBuilder
+     * 3. Start pairing with newQRCodeDevActivator().start()
+     */
+    private fun pairDeviceWithQRCode(qrCodeUrl: String, homeId: Long, result: MethodChannel.Result) {
+        try {
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+            Log.d("TuyaSDK", "📷 Starting QR code device pairing (Core SDK API)")
+            Log.d("TuyaSDK", "   QR Code URL: $qrCodeUrl")
+            Log.d("TuyaSDK", "   Home ID: $homeId")
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+
+            // Check if user is logged in
+            val user = ThingHomeSdk.getUserInstance().user
+            if (user == null) {
+                Log.e("TuyaSDK", "❌ User not logged in")
+                result.error("USER_NOT_LOGGED_IN", "User must be logged in to pair devices", null)
+                return
+            }
+
+            // Step 1: Query device UUID from QR code URL
+            // Per official docs: ThingHomeSdk.getActivatorInstance().deviceQrCodeParse("url", callback)
+            Log.d("TuyaSDK", "🔍 Step 1: Parsing QR code to get device UUID...")
+            ThingHomeSdk.getActivatorInstance().deviceQrCodeParse(qrCodeUrl, object : IThingDataCallback<QrScanBean> {
+                override fun onSuccess(qrScanResult: QrScanBean) {
+                    try {
+                        Log.d("TuyaSDK", "✅ QR code parsed successfully")
+                        
+                        // Extract UUID from result.actionData
+                        // Using reflection to access actionData field
+                        var uuid: String? = null
+                        try {
+                            val actionDataField = qrScanResult.javaClass.getDeclaredField("actionData")
+                            actionDataField.isAccessible = true
+                            val actionData = actionDataField.get(qrScanResult)
+                            
+                            // UUID might be in actionData as a String or in a Map
+                            when (actionData) {
+                                is String -> {
+                                    uuid = actionData
+                                }
+                                is Map<*, *> -> {
+                                    uuid = actionData["uuid"] as? String
+                                }
+                                else -> {
+                                    // Try to get UUID directly from result if it's a field
+                                    try {
+                                        val uuidField = qrScanResult.javaClass.getDeclaredField("uuid")
+                                        uuidField.isAccessible = true
+                                        uuid = uuidField.get(qrScanResult) as? String
+                                    } catch (e: Exception) {
+                                        Log.w("TuyaSDK", "Could not extract UUID directly: ${e.message}")
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.w("TuyaSDK", "Could not access actionData field: ${e.message}")
+                            // Try to get UUID directly from result
+                            try {
+                                val uuidField = qrScanResult.javaClass.getDeclaredField("uuid")
+                                uuidField.isAccessible = true
+                                uuid = uuidField.get(qrScanResult) as? String
+                            } catch (e2: Exception) {
+                                Log.w("TuyaSDK", "Could not extract UUID: ${e2.message}")
+                            }
+                        }
+                        
+                        if (uuid == null || uuid.isEmpty()) {
+                            Log.e("TuyaSDK", "❌ Failed to extract UUID from QR code result")
+                            Log.d("TuyaSDK", "   Result type: ${qrScanResult.javaClass.name}")
+                            Log.d("TuyaSDK", "   Result: $qrScanResult")
+                            result.error("UUID_EXTRACTION_FAILED", "Failed to extract device UUID from QR code", null)
+                            return
+                        }
+                        
+                        Log.d("TuyaSDK", "✅ Device UUID extracted: $uuid")
+                        
+                        // Step 2 & 3: Initialize pairing parameters and start pairing
+                        startQRCodePairing(uuid, homeId, result)
+                        
+                    } catch (e: Exception) {
+                        Log.e("TuyaSDK", "❌ Error processing QR code result: ${e.message}", e)
+                        result.error("QR_PARSE_ERROR", "Failed to process QR code result: ${e.message}", null)
+                    }
+                }
+
+                override fun onError(errorCode: String, errorMessage: String) {
+                    Log.e("TuyaSDK", "❌ QR code parse error: $errorCode - $errorMessage")
+                    // errorCode: QR_PROTOCOL_NOT_RECOGNIZED - protocol is unknown
+                    result.error(
+                        errorCode,
+                        errorMessage,
+                        null
+                    )
+                }
+            })
+            
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "❌ Exception in pairDeviceWithQRCode: ${e.message}", e)
+            result.error("QR_PAIRING_ERROR", "Exception: ${e.message}", null)
+        }
+    }
+
+    /**
+     * Start QR Code Device Pairing
+     * Steps 2 & 3 from official documentation:
+     * - Initialize pairing parameters with ThingQRCodeActivatorBuilder
+     * - Start pairing with newQRCodeDevActivator().start()
+     */
+    private fun startQRCodePairing(uuid: String, homeId: Long, result: MethodChannel.Result) {
+        try {
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+            Log.d("TuyaSDK", "🚀 Step 2: Initializing pairing parameters...")
+            Log.d("TuyaSDK", "   UUID: $uuid")
+            Log.d("TuyaSDK", "   Home ID: $homeId")
+            Log.d("TuyaSDK", "════════════════════════════════════════")
+
+            // Step 2: Initialize pairing parameters using reflection
+            // Per official docs: ThingQRCodeActivatorBuilder builder = new ThingQRCodeActivatorBuilder()
+            val builderClass = Class.forName("com.thingclips.smart.home.sdk.activator.ThingQRCodeActivatorBuilder")
+            val builder = builderClass.getDeclaredConstructor().newInstance()
+            
+            // Set UUID
+            val setUuidMethod = builderClass.getMethod("setUuid", String::class.java)
+            setUuidMethod.invoke(builder, uuid)
+            
+            // Set Home ID
+            val setHomeIdMethod = builderClass.getMethod("setHomeId", Long::class.javaPrimitiveType)
+            setHomeIdMethod.invoke(builder, homeId)
+            
+            // Set Context
+            val setContextMethod = builderClass.getMethod("setContext", android.content.Context::class.java)
+            setContextMethod.invoke(builder, this)
+            
+            // Set Timeout
+            val setTimeoutMethod = builderClass.getMethod("setTimeOut", Int::class.javaPrimitiveType)
+            setTimeoutMethod.invoke(builder, 100) // Default timeout: 100 seconds
+            
+            // Create listener using reflection
+            val listenerClass = Class.forName("com.thingclips.smart.home.sdk.activator.IThingSmartActivatorListener")
+            val listener = java.lang.reflect.Proxy.newProxyInstance(
+                listenerClass.classLoader,
+                arrayOf(listenerClass)
+            ) { _, method, args ->
+                when (method.name) {
+                    "onError" -> {
+                        val errorCode = args?.get(0) as? String
+                        val errorMsg = args?.get(1) as? String
+                        Log.e("TuyaSDK", "❌ Device pairing error: $errorCode - $errorMsg")
+                        result.error(
+                            errorCode ?: "PAIRING_ERROR",
+                            errorMsg ?: "Device pairing failed",
+                            null
+                        )
+                        cleanupQRCodeActivator()
+                        null
+                    }
+                    "onActiveSuccess" -> {
+                        val devResp = args?.get(0)
+                        if (devResp != null) {
+                            try {
+                                val devIdField = devResp.javaClass.getDeclaredField("devId")
+                                devIdField.isAccessible = true
+                                val devId = devIdField.get(devResp) as? String
+                                
+                                val nameField = devResp.javaClass.getDeclaredField("name")
+                                nameField.isAccessible = true
+                                val name = nameField.get(devResp) as? String
+                                
+                                val productIdField = devResp.javaClass.getDeclaredField("productId")
+                                productIdField.isAccessible = true
+                                val productId = productIdField.get(devResp) as? String
+                                
+                                Log.d("TuyaSDK", "════════════════════════════════════════")
+                                Log.d("TuyaSDK", "✅ Device paired successfully!")
+                                Log.d("TuyaSDK", "   Device ID: $devId")
+                                Log.d("TuyaSDK", "   Device Name: $name")
+                                Log.d("TuyaSDK", "   Product ID: $productId")
+                                Log.d("TuyaSDK", "════════════════════════════════════════")
+                                
+                                result.success(mapOf(
+                                    "deviceId" to (devId ?: ""),
+                                    "deviceName" to (name ?: ""),
+                                    "productId" to (productId ?: ""),
+                                    "success" to true
+                                ))
+                            } catch (e: Exception) {
+                                Log.e("TuyaSDK", "❌ Error extracting device info: ${e.message}", e)
+                                result.success(mapOf("success" to true))
+                            }
+                        }
+                        cleanupQRCodeActivator()
+                        null
+                    }
+                    "onStep" -> {
+                        val step = args?.get(0) as? String
+                        val data = args?.get(1)
+                        Log.d("TuyaSDK", "📋 Pairing step: $step")
+                        if (data != null) {
+                            Log.d("TuyaSDK", "   Data: $data")
+                        }
+                        null
+                    }
+                    else -> null
+                }
+            }
+            
+            // Set listener
+            val setListenerMethod = builderClass.getMethod("setListener", listenerClass)
+            setListenerMethod.invoke(builder, listener)
+
+            // Step 3: Call the pairing method
+            // Per official docs: IThingActivator mThingActivator = ThingHomeSdk.getActivatorInstance().newQRCodeDevActivator(builder)
+            Log.d("TuyaSDK", "🚀 Step 3: Creating QR code activator and starting pairing...")
+            val activatorInstance = ThingHomeSdk.getActivatorInstance()
+            val newQRCodeDevActivatorMethod = activatorInstance.javaClass.getMethod("newQRCodeDevActivator", builderClass)
+            currentQRCodeActivator = newQRCodeDevActivatorMethod.invoke(activatorInstance, builder)
+            
+            // Start pairing
+            // Per official docs: mThingActivator.start()
+            val startMethod = currentQRCodeActivator?.javaClass?.getMethod("start")
+            startMethod?.invoke(currentQRCodeActivator)
+            
+            Log.d("TuyaSDK", "✅ QR code device pairing started")
+            Log.d("TuyaSDK", "   Waiting for pairing to complete...")
+            // Don't call result.success yet - wait for onActiveSuccess callback
+            
+        } catch (e: Exception) {
+            Log.e("TuyaSDK", "❌ Exception in startQRCodePairing: ${e.message}", e)
+            Log.e("TuyaSDK", "   Stack trace: ${e.stackTrace.joinToString("\n")}")
+            result.error("PAIRING_START_ERROR", "Exception: ${e.message}", null)
+            cleanupQRCodeActivator()
+        }
+    }
+
+    /**
+     * Clean up QR code activator
+     * Per official docs: mThingActivator.onDestory()
+     */
+    private fun cleanupQRCodeActivator() {
+        try {
+            currentQRCodeActivator?.let { activator ->
+                try {
+                    val stopMethod = activator.javaClass.getMethod("stop")
+                    stopMethod.invoke(activator)
+                } catch (e: Exception) {
+                    Log.w("TuyaSDK", "Error stopping activator: ${e.message}")
+                }
+                try {
+                    val onDestroyMethod = activator.javaClass.getMethod("onDestory")
+                    onDestroyMethod.invoke(activator)
+                } catch (e: Exception) {
+                    Log.w("TuyaSDK", "Error destroying activator: ${e.message}")
+                }
+                currentQRCodeActivator = null
+                Log.d("TuyaSDK", "✅ QR code activator cleaned up")
+            }
+        } catch (e: Exception) {
+            Log.w("TuyaSDK", "Error cleaning up activator: ${e.message}")
         }
     }
 }

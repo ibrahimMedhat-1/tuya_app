@@ -71,12 +71,12 @@
 		<!-- Local Network for device discovery -->
 		<key>NSLocalNetworkUsageDescription</key>
 		<string>We need local network access to discover and control smart devices</string>
-	<!-- Bonjour services for device discovery -->
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_tuya._tcp</string>
+		<!-- Bonjour services for device discovery -->
+		<key>NSBonjourServices</key>
+		<array>
+			<string>_tuya._tcp</string>
 		<string>_tuyasmart._tcp</string>
-	</array>
+		</array>
 	<!-- Speech Recognition for voice control devices (optional) -->
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>We need speech recognition access for voice control features</string>
@@ -89,8 +89,8 @@
 	<!-- Reminders for automation (optional) -->
 	<key>NSRemindersUsageDescription</key>
 	<string>We need reminders access to set up device automation reminders</string>
-	<!-- URL Scheme for Tuya SDK -->
-	<key>CFBundleURLTypes</key>
+		<!-- URL Scheme for Tuya SDK -->
+		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
 				<key>CFBundleTypeRole</key>
